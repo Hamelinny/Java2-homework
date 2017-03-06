@@ -6,13 +6,11 @@ package ru.spbau.sofronova;
  * Next 'get' calls returns the same object as the first.
  * @param <T> type of result for computation
  */
-
 public interface Lazy <T>{
 
     /**
      * Returns the result of computation.
      * @return the result
      */
-
     T get();
 }
