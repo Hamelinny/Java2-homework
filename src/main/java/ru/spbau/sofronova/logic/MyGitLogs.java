@@ -1,7 +1,6 @@
 package ru.spbau.sofronova.logic;
 
-
-import com.sun.istack.internal.NotNull;
+import org.jetbrains.annotations.NotNull;
 import ru.spbau.sofronova.exceptions.*;
 
 import java.io.IOException;

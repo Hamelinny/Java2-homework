@@ -1,6 +1,6 @@
 package ru.spbau.sofronova.logic;
 
-import com.sun.istack.internal.NotNull;
+import org.jetbrains.annotations.NotNull;
 import ru.spbau.sofronova.entities.Blob;
 import ru.spbau.sofronova.entities.Commit;
 import ru.spbau.sofronova.entities.Tree;

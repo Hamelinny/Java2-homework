@@ -1,6 +1,6 @@
 package ru.spbau.sofronova.entities;
 
-import com.sun.istack.internal.NotNull;
+import org.jetbrains.annotations.NotNull;
 import ru.spbau.sofronova.exceptions.ObjectAddException;
 
 import java.io.IOException;
