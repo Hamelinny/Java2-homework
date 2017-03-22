@@ -1,5 +1,6 @@
 package ru.spbau.sofronova.logic;
 
+import com.sun.istack.internal.NotNull;
 import ru.spbau.sofronova.exceptions.*;
 
 import java.io.File;
@@ -12,9 +13,20 @@ import java.util.List;
 import static ru.spbau.sofronova.logic.MyGitHead.*;
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
 
+/**
+ * A class that provides work with branches.
+ */
 public class MyGitBranch {
 
-    static void createBranch(String name, String commitHash) throws GitDoesNotExistException,
+    /**
+     * Method to create a branch with specified name.
+     * @param name name of branch to create.
+     * @param commitHash hash of commit to start new branch from it
+     * @throws GitDoesNotExistException if git does not exist
+     * @throws BranchAlreadyExistsException if branch with that name already exists
+     * @throws BranchIOException if there are some IO problems during interaction with information about branches
+     */
+    static void createBranch(@NotNull String name, @NotNull String commitHash) throws GitDoesNotExistException,
             BranchAlreadyExistsException, BranchIOException {
         if (Files.notExists(GIT_DIRECTORY))
             throw new GitDoesNotExistException();
@@ -23,7 +35,12 @@ public class MyGitBranch {
         updateRefs(name, commitHash);
     }
 
-    static void deleteBranch(String name) throws BranchDeletionException {
+    /**
+     * Method to delete branch with specified name.
+     * @param name name of branch to delete.
+     * @throws BranchDeletionException if there are problems during deletion
+     */
+    static void deleteBranch(@NotNull String name) throws BranchDeletionException {
         try {
             Files.deleteIfExists(buildPath(REFS_DIRECTORY, name));
         } catch (IOException e) {
@@ -31,7 +48,13 @@ public class MyGitBranch {
         }
     }
 
-    static void updateRefs(String branch, String commitHash) throws  BranchIOException {
+    /**
+     * Method to update references after making a new commit in branch.
+     * @param branch name of branch
+     * @param commitHash hash of commit to refer to
+     * @throws BranchIOException if there are problems during interaction with information
+     */
+    static void updateRefs(@NotNull String branch, @NotNull String commitHash) throws  BranchIOException {
         Path branchLoc = buildPath(REFS_DIRECTORY, branch);
         try {
             if (Files.notExists(branchLoc))
@@ -43,7 +66,14 @@ public class MyGitBranch {
         }
     }
 
-    static void checkoutBranch(String branch) throws BranchIOException, HeadIOException,
+    /**
+     * Method to switch from current branch to another.
+     * @param branch name of this another branch
+     * @throws BranchIOException if there are some problems during interaction with information about branches.
+     * @throws HeadIOException if there are problems during interaction with HEAD file
+     * @throws GitDoesNotExistException if git does not exist
+     */
+    static void checkoutBranch(@NotNull String branch) throws BranchIOException, HeadIOException,
             GitDoesNotExistException {
         try {
             String commitHash = getCurrentCommit();
@@ -57,13 +87,21 @@ public class MyGitBranch {
         }
     }
 
-    static void checkoutCommit(String hash) throws GitDoesNotExistException, BranchAlreadyExistsException,
+    /**
+     * Method that takes a commit and makes from it a new branch which name is hash of the commit.
+     * @param hash hash of the commit
+     * @throws GitDoesNotExistException if git does not exist
+     * @throws BranchAlreadyExistsException if branch with that name already exists
+     * @throws BranchIOException if there are some problems during interaction with information about branches.
+     * @throws HeadIOException if there are problems during interaction with HEAD file
+     */
+    static void checkoutCommit(@NotNull String hash) throws GitDoesNotExistException, BranchAlreadyExistsException,
             BranchIOException, HeadIOException {
         createBranch(hash, hash);
         checkoutBranch(hash);
     }
 
-    private static void addFilesFromCommit(String commitHash) throws BranchIOException {
+    private static void addFilesFromCommit(@NotNull String commitHash) throws BranchIOException {
         try {
             String hashTree = Files.lines(buildPath(OBJECTS_DIRECTORY, commitHash)).findFirst().get();
             List<String> filesToRestore = Files.readAllLines(buildPath(OBJECTS_DIRECTORY, hashTree));
@@ -78,7 +116,7 @@ public class MyGitBranch {
         }
     }
 
-    private static void deleteFilesFromCommit(String commitHash) throws BranchIOException {
+    private static void deleteFilesFromCommit(@NotNull String commitHash) throws BranchIOException {
         try {
             String hashTree = Files.lines(buildPath(OBJECTS_DIRECTORY, commitHash)).findFirst().get();
             List<String> filesToDelete = Files.readAllLines(buildPath(OBJECTS_DIRECTORY, hashTree));

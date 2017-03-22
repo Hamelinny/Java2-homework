@@ -1,11 +1,11 @@
 package ru.spbau.sofronova.logic;
 
+import com.sun.istack.internal.NotNull;
 import ru.spbau.sofronova.entities.Blob;
 import ru.spbau.sofronova.entities.Commit;
 import ru.spbau.sofronova.entities.Tree;
 import ru.spbau.sofronova.exceptions.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,13 +20,28 @@ import static ru.spbau.sofronova.logic.MyGitIndex.*;
 import static ru.spbau.sofronova.logic.MyGitLogs.*;
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
 
+/**
+ * A class which provides basic commands from git.
+ */
 public class MyGitCommands {
 
-    public static void init() throws GitAlreadyInitedException, GitDoesNotExistException,
+    /**
+     * Method to initialize git.
+     * @throws GitAlreadyInitializedException if git is already initialized
+     * @throws GitDoesNotExistException if git does not exists then we make a branch
+     * @throws BranchAlreadyExistsException if branch is already exist
+     * @throws LogIOException if there are problems during log IO
+     * @throws BranchIOException if there are problems during interaction with info about branch
+     * @throws IndexIOException if there are problems during interaction with INDEX file
+     * @throws HeadIOException if there are problems during interaction with HEAD file
+     * @throws ObjectAddException if there are problems during adding some object in git
+     * @throws ObjectIOException if there are problems during object IO
+     */
+    public static void init() throws GitAlreadyInitializedException, GitDoesNotExistException,
             BranchAlreadyExistsException, LogIOException, BranchIOException, IndexIOException,
             HeadIOException, ObjectAddException, ObjectIOException {
         if (Files.exists(GIT_DIRECTORY))
-            throw new GitAlreadyInitedException();
+            throw new GitAlreadyInitializedException();
         try {
             makeDirs();
             Commit initial = commit("initial commit");
@@ -39,7 +54,19 @@ public class MyGitCommands {
 
     }
 
-    public static Commit commit(String message) throws IndexIOException, GitDoesNotExistException,
+    /**
+     * Method to make a commit.
+     * @param message commit message
+     * @return Commit object corresponding to commit we made
+     * @throws IndexIOException if there are problems during interaction with INDEX file
+     * @throws GitDoesNotExistException if git does not exist
+     * @throws LogIOException if there are problems during log IO
+     * @throws HeadIOException if there are problems during interaction with HEAD file
+     * @throws BranchIOException if there are problems during interaction with info about branches
+     * @throws ObjectAddException if there are problems during adding object to git
+     * @throws ObjectIOException if there are problems with object IO
+     */
+    public static Commit commit(@NotNull String message) throws IndexIOException, GitDoesNotExistException,
             LogIOException, HeadIOException, BranchIOException, ObjectAddException, ObjectIOException {
         if (Files.notExists(GIT_DIRECTORY))
             throw new GitDoesNotExistException();
@@ -47,8 +74,8 @@ public class MyGitCommands {
         List<String> indexContent = getCurrentIndexState();
         List<String> files = new ArrayList<>();
         List<String> hashes = new ArrayList<>();
-        for (int i = 0; i < indexContent.size(); i++) {
-            files.add(Paths.get(indexContent.get(i)).toString());
+        for (String anIndexContent : indexContent) {
+            files.add(Paths.get(anIndexContent).toString());
         }
 
         for (String file : files) {
@@ -69,13 +96,27 @@ public class MyGitCommands {
         return commit;
     }
 
-    public static void add(List<Path> files) throws IndexIOException, GitDoesNotExistException {
+    /**
+     * Method to make add file to INDEX.
+     * @param files files we need to add to INDEX
+     * @throws IndexIOException if there are problems during interaction with INDEX file
+     * @throws GitDoesNotExistException if git does not exist
+     */
+    public static void add(@NotNull List<Path> files) throws IndexIOException, GitDoesNotExistException {
         if (Files.notExists(GIT_DIRECTORY))
             throw new GitDoesNotExistException();
         updateIndex(files);
     }
 
-    public static void checkout(String toCheckout) throws GitDoesNotExistException,
+    /**
+     * Method to make checkout to branch or commit.
+     * @param toCheckout name of branch or hash of commit
+     * @throws GitDoesNotExistException if git does not exist
+     * @throws BranchAlreadyExistsException if branch we want to make from commit already exists
+     * @throws HeadIOException if there are problems during interaction with HEAD file
+     * @throws BranchIOException if there are problems during interaction with info about branches
+     */
+    public static void checkout(@NotNull String toCheckout) throws GitDoesNotExistException,
             BranchAlreadyExistsException, HeadIOException, BranchIOException {
         if (isHash(toCheckout))
             checkoutCommit(toCheckout);
@@ -83,16 +124,41 @@ public class MyGitCommands {
             checkoutBranch(toCheckout);
     }
 
-    public static void branch(String name) throws BranchIOException, HeadIOException,
+    /**
+     * Method to make a new branch with specified name.
+     * @param name name of branch to make
+     * @throws BranchIOException if there are problems during interaction with info about branches
+     * @throws HeadIOException if there are problems during interaction with HEAD file
+     * @throws GitDoesNotExistException if git does not exist
+     * @throws BranchAlreadyExistsException if branch we want to make already exists
+     */
+    public static void branch(@NotNull String name) throws BranchIOException, HeadIOException,
             GitDoesNotExistException, BranchAlreadyExistsException {
         createBranch(name, getCurrentCommit());
     }
 
-    public static void branchWithDOption(String name) throws BranchDeletionException {
+    /**
+     * Method to delete a branch.
+     * @param name name of branch to delete
+     * @throws BranchDeletionException if there are problems during branch deletion
+     */
+    public static void branchWithDOption(@NotNull String name) throws BranchDeletionException {
         deleteBranch(name);
     }
 
-    public static void merge(String branch) throws GitDoesNotExistException, HeadIOException,
+    /**
+     * Method to merge branch with specified name into current branch.
+     * @param branch name of branch to merge
+     * @throws GitDoesNotExistException if git does not exist
+     * @throws HeadIOException if there are problems during interaction with HEAD file
+     * @throws LogIOException if there are problems during interaction with log
+     * @throws IndexIOException if there are problems during interaction with INDEX file
+     * @throws ObjectAddException if there are problems during object adding
+     * @throws BranchIOException if there are problems during interaction with information about branch
+     * @throws MergeIOException if there are IO problems during merge
+     * @throws ObjectIOException if there are problems with objects IO
+     */
+    public static void merge(@NotNull String branch) throws GitDoesNotExistException, HeadIOException,
             LogIOException, IndexIOException, ObjectAddException, BranchIOException, MergeIOException, ObjectIOException {
         if (Files.notExists(GIT_DIRECTORY)){
             throw new GitDoesNotExistException();
@@ -120,6 +186,13 @@ public class MyGitCommands {
         }
     }
 
+    /**
+     * Method returns a log for current branch.
+     * @return log content
+     * @throws GitDoesNotExistException if git does not exist
+     * @throws HeadIOException if there are problems during interaction with HEAD file
+     * @throws LogIOException if there are problems during log IO
+     */
     public static byte[] log() throws GitDoesNotExistException, HeadIOException, LogIOException {
         if (Files.notExists(GIT_DIRECTORY))
             throw new GitDoesNotExistException();

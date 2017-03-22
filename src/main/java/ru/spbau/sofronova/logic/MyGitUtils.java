@@ -1,22 +1,48 @@
 package ru.spbau.sofronova.logic;
 
+import com.sun.istack.internal.NotNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
+/**
+ * A class that contains some useful constants and methods.
+ */
 public class MyGitUtils {
+    /**
+     * A path to directory which contains git repository.
+     */
     public static final Path GIT_DIRECTORY = buildPath(System.getProperty("user.dir"), ".git");
+    /**
+     * A path to INDEX file.
+     */
     public static final Path INDEX = buildPath(GIT_DIRECTORY, "index");
+    /**
+     * A path to directory which contains git objects.
+     */
     public static final Path OBJECTS_DIRECTORY = buildPath(GIT_DIRECTORY, "objects");
+    /**
+     * A path to directory which contains references to current commit in each branch.
+     */
     public static final Path REFS_DIRECTORY = buildPath(GIT_DIRECTORY, "refs");
+    /**
+     * A path to HEAD file.
+     */
     public static final Path HEAD = buildPath(GIT_DIRECTORY, "HEAD");
+    /**
+     * A path to directory which contains logs for each branch.
+     */
     public static final Path LOGS_DIRECTORY = buildPath(GIT_DIRECTORY, "logs");
 
     private static final int HASH_LENGTH = 40;
 
+    /**
+     * Method to create all needful directories.
+     * @throws IOException if there are problems during creation.
+     */
     static void makeDirs() throws IOException {
         Files.createDirectory(GIT_DIRECTORY);
         Files.createDirectory(OBJECTS_DIRECTORY);
@@ -26,11 +52,20 @@ public class MyGitUtils {
         Files.createFile(HEAD);
     }
 
+    /**
+     * Method returns a new line symbol as an array of bytes.
+     * @return new line symbol
+     */
     public static byte[] newLine() {
         return System.getProperty("line.separator").getBytes();
     }
 
-    public static boolean isHash(String mayBeHashMayBeNot) {
+    /**
+     * Method to determine whether the string is hash or not.
+     * @param mayBeHashMayBeNot string to check
+     * @return true if string is hash, false if not
+     */
+    static boolean isHash(@NotNull String mayBeHashMayBeNot) {
         if (mayBeHashMayBeNot.length() != HASH_LENGTH){
             return false;
         }
@@ -42,22 +77,38 @@ public class MyGitUtils {
         return true;
     }
 
-    public static void deleteDirectory(File dir) {
+    /**
+     * Method to delete a specified directory recursively.
+     * @param dir directory to delete
+     */
+    public static void deleteDirectory(@NotNull File dir) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                File f = new File(dir, children[i]);
+            for (String aChildren : children) {
+                File f = new File(dir, aChildren);
                 deleteDirectory(f);
             }
             dir.delete();
         } else dir.delete();
     }
 
-    public static Path buildPath(Path dir, String name) {
+    /**
+     * Method to create a path to file if we know a path to a parent directory and a name of file.
+     * @param dir parent directory (Path type)
+     * @param name name of file
+     * @return path to file
+     */
+    public static Path buildPath(@NotNull Path dir, @NotNull String name) {
         return Paths.get(dir + File.separator + name);
     }
 
-    public static Path buildPath(String dir, String name) {
+    /**
+     * Method to create a path to file if we know a path to a parent directory and a name of file.
+     * @param dir parent directory (String type)
+     * @param name name of file
+     * @return path to file
+     */
+    public static Path buildPath(@NotNull String dir, @NotNull String name) {
         return Paths.get(dir + File.separator + name);
     }
 }

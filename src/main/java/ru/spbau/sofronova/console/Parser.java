@@ -13,7 +13,6 @@ import static ru.spbau.sofronova.logic.MyGitCommands.*;
 /**
  * A class which provides parsing of arguments from console.
  */
-
 public class Parser {
 
     /**
@@ -127,7 +126,7 @@ public class Parser {
         catch (BranchIOException e) {
             System.out.println("cannot change this branch\n");
         }
-        catch (GitAlreadyInitedException e) {
+        catch (GitAlreadyInitializedException e) {
             System.out.println("git already inited\n");
         }
         catch (HeadIOException e) {

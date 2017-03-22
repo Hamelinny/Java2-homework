@@ -1,15 +1,12 @@
 package ru.spbau.sofronova.entities;
 
 
+import com.sun.istack.internal.NotNull;
 import ru.spbau.sofronova.exceptions.ObjectAddException;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Date;
-import java.util.List;
 
 import static ru.spbau.sofronova.logic.MyGitUtils.OBJECTS_DIRECTORY;
 import static ru.spbau.sofronova.logic.MyGitUtils.buildPath;
@@ -17,28 +14,29 @@ import static ru.spbau.sofronova.logic.MyGitUtils.buildPath;
 /**
  * Object which corresponds a commit. It stores commit author, message, date of commit and hash of the tree.
  */
-
 public class Commit extends GitObject {
 
+    @NotNull
     private String message;
+    @NotNull
     private String author;
+    @NotNull
     private Date date;
+    @NotNull
     private String treeHash;
-
 
     /**
      * Make a commit object from hash of the tree and message.
      * @param treeHash hash of the tree.
      * @param message commit message.
      */
-    public Commit(String treeHash, String message) {
+    public Commit(@NotNull String treeHash, @NotNull String message) {
         super((treeHash + message).getBytes());
         this.message = message;
         this.author = System.getProperty("user.name");
         this.date = new Date();
         this.treeHash = treeHash;
     }
-
 
     /**
      * Method which return an information about commit: author, message and date.

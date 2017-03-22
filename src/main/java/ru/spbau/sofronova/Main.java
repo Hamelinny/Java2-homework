@@ -1,21 +1,16 @@
 package ru.spbau.sofronova;
 
-import ru.spbau.sofronova.exceptions.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-
 import static ru.spbau.sofronova.console.Parser.*;
-import static ru.spbau.sofronova.logic.MyGitCommands.*;
 
-
+/**
+ * Main class contains a main method.
+ */
 public class Main {
-    public static void main(String[] args) throws GitDoesNotExistException, IndexIOException, HeadIOException, IOException, BranchIOException, LogIOException, ObjectAddException, BranchAlreadyExistsException, GitAlreadyInitedException {
+    /**
+     * Main method to call from console.
+     * @param args command and parameters for git
+     */
+    public static void main(String[] args) {
         parse(args);
     }
 }

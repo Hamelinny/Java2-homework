@@ -1,5 +1,6 @@
 package ru.spbau.sofronova.entities;
 
+import com.sun.istack.internal.NotNull;
 import ru.spbau.sofronova.exceptions.ObjectAddException;
 import ru.spbau.sofronova.exceptions.ObjectIOException;
 
@@ -12,16 +13,15 @@ import static ru.spbau.sofronova.logic.MyGitUtils.*;
 /**
  * Object which corresponds to a file. It stores a content from file.
  */
-
 public class Blob extends GitObject {
 
+    @NotNull
     private byte[] content;
 
-    private Blob(byte[] content) {
+    private Blob(@NotNull byte[] content) {
         super(content);
         this.content = content;
     }
-
 
     /** This method creates a file in repository which name is a hash from blob.
      * This file stores content from blob.
@@ -36,14 +36,13 @@ public class Blob extends GitObject {
         }
     }
 
-
     /**
      * Method which purpose is creating a blob from path to file.
      * @param file path to file
      * @return blob with content from file
      * @throws ObjectIOException if there are some problems with file IO
      */
-    public static Blob getBlob(Path file) throws ObjectIOException {
+    public static Blob getBlob(@NotNull Path file) throws ObjectIOException {
         try {
             return new Blob(Files.readAllBytes(file));
         } catch (IOException e) {
