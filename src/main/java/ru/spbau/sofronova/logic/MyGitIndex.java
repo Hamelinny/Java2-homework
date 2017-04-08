@@ -46,7 +46,7 @@ public class MyGitIndex {
      * @param files files to add to INDEX
      * @throws IndexIOException if there are IO problems during interaction with INDEX
      */
-    void updateIndex(@NotNull List <Path> files) throws IndexIOException {
+    public void updateIndex(@NotNull List <Path> files) throws IndexIOException {
         List <String> indexContent = getCurrentIndexState();
         List <String> toAdd = files.stream().map(Path::toString).collect(Collectors.toList());
         indexContent.addAll(toAdd);
@@ -66,7 +66,7 @@ public class MyGitIndex {
      * Method to clean INDEX file.
      * @throws IndexIOException if there are IO problems during interaction with INDEX file
      */
-    void cleanIndex() throws IndexIOException {
+    public void cleanIndex() throws IndexIOException {
         try {
             Files.delete(repository.INDEX);
             Files.createFile(repository.INDEX);
