@@ -2,6 +2,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import ru.spbau.sofronova.entities.Blob;
 import ru.spbau.sofronova.exceptions.*;
 import ru.spbau.sofronova.logic.*;
 
@@ -9,20 +10,16 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
-import static ru.spbau.sofronova.Main.*;
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
 
 public class MyGitTests {
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
-
-    public static final String CURRENT_DIRECTORY = Paths.get(System.getProperty("user.dir")).toString();
     public MyGit rep;
     public MyGitLogs logs;
     public MyGitBranch brnch;
@@ -54,7 +51,7 @@ public class MyGitTests {
     @Test
     public void addAndCommitTest() throws IOException, IndexIOException, GitDoesNotExistException,
             LogIOException, ObjectIOException, ObjectStoreException, HeadIOException, BranchIOException {
-        Path addTestFile = buildPath(CURRENT_DIRECTORY, "addTest");
+        Path addTestFile = buildPath(rep.GIT_DIRECTORY.getParent(), "addTest");
         Files.write(addTestFile, "addTest".getBytes());
         List <Path> pathList = new ArrayList<>();
         pathList.add(addTestFile);
@@ -100,7 +97,7 @@ public class MyGitTests {
         rep.checkout(newBranchName);
         String headContent = Files.lines(rep.HEAD).findFirst().get();
         assertEquals(newBranchName, headContent);
-        Path pathToWrite = buildPath(CURRENT_DIRECTORY, "newFile");
+        Path pathToWrite = buildPath(rep.GIT_DIRECTORY.getParent(), "newFile");
         Files.write(pathToWrite, "abacaba".getBytes());
         List <Path> toWrite = new ArrayList<>();
         toWrite.add(pathToWrite);
@@ -129,7 +126,7 @@ public class MyGitTests {
         String newBranchName = "toMerge";
         rep.branch(newBranchName);
         rep.checkout(newBranchName);
-        Path fileToMerge = buildPath(CURRENT_DIRECTORY, "merge");
+        Path fileToMerge = buildPath(rep.GIT_DIRECTORY.getParent(), "merge");
         Files.write(fileToMerge, "merge".getBytes());
         List <Path> listOfFilesToMerge = new ArrayList<>();
         listOfFilesToMerge.add(fileToMerge);
@@ -159,17 +156,44 @@ public class MyGitTests {
     @Test
     public void commitWithTwoFiles() throws IOException, IndexIOException, GitDoesNotExistException,
             LogIOException, ObjectIOException, ObjectStoreException, HeadIOException, BranchIOException {
-        Path addOne = buildPath(CURRENT_DIRECTORY, "one");
+        Path addOne = buildPath(rep.GIT_DIRECTORY.getParent(), "one");
         Files.write(addOne, "one".getBytes());
         List <Path> pathList = new ArrayList<>();
         pathList.add(addOne);
-        Path addTwo = buildPath(CURRENT_DIRECTORY, "two");
+        Path addTwo = buildPath(rep.GIT_DIRECTORY.getParent(), "two");
         Files.write(addTwo, "two".getBytes());
         pathList.add(addTwo);
         rep.add(pathList);
         rep.commit("smth");
         rep.commit("another");
         rep.commit("smth");
+    }
+
+    @Test
+    public void storeTest() throws IOException, ObjectIOException, ObjectStoreException {
+        Path bl = buildPath(rep.GIT_DIRECTORY.getParent(), "blob");
+        Files.write(bl, "blob".getBytes());
+        Blob blob = Blob.getBlob(bl, rep);
+        blob.storeObject();
+        assertTrue(Files.exists(buildPath(rep.OBJECTS_DIRECTORY, blob.getHash())));
+        assertEquals("blob", Files.lines(buildPath(rep.OBJECTS_DIRECTORY, blob.getHash())).findFirst().get());
+    }
+
+    @Test
+    public void headStateTest() throws HeadIOException {
+        head.updateHead("another");
+        assertEquals("another", head.getCurrentBranch());
+    }
+
+    @Test
+    public void indexStateTest() throws IndexIOException, IOException {
+        ind.cleanIndex();
+        List <Path> list = new ArrayList<>();
+        Path toIndex = buildPath(rep.GIT_DIRECTORY.getParent(), "ind");
+        Files.createFile(toIndex);
+        list.add(toIndex);
+        ind.updateIndex(list);
+        assertEquals(toIndex.toString(), Files.lines(rep.INDEX).findFirst().get());
     }
 
     @Test(expected = GitDoesNotExistException.class)
@@ -215,3 +239,4 @@ public class MyGitTests {
     }
 
 }
+
