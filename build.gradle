@@ -2,11 +2,25 @@ group 'MyGit'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = "Main"
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+}
+
+task createJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'MyGit application',
+                'Implementation-Version': version,
+                'Main-Class': 'ru.spbau.sofronova.Main'
+    }
+    baseName = project.name + '-application'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
 
 dependencies {

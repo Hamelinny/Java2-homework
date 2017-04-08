@@ -1,7 +1,9 @@
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import ru.spbau.sofronova.entities.Commit;
+import org.junit.rules.TemporaryFolder;
 import ru.spbau.sofronova.exceptions.*;
+import ru.spbau.sofronova.logic.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,132 +15,174 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 import static ru.spbau.sofronova.Main.*;
-import static ru.spbau.sofronova.logic.MyGitBranch.*;
-import static ru.spbau.sofronova.logic.MyGitCommands.*;
-import static ru.spbau.sofronova.logic.MyGitHead.*;
-import static ru.spbau.sofronova.logic.MyGitIndex.*;
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
 
 public class MyGitTests {
 
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+
     public static final String CURRENT_DIRECTORY = Paths.get(System.getProperty("user.dir")).toString();
+    public MyGit rep;
+    public MyGitLogs logs;
+    public MyGitBranch brnch;
+    public MyGitHead head;
+    public MyGitIndex ind;
 
     @Before
-    public void preparation() {
-        deleteDirectory(new File(GIT_DIRECTORY.toString()));
-        main(makeInitArgs());
+    public void preparation() throws IOException, GitDoesNotExistException, BranchIOException,
+            InitIOException, GitAlreadyInitializedException, LogIOException, IndexIOException,
+            BranchAlreadyExistsException, ObjectIOException, ObjectStoreException, HeadIOException {
+        rep = new MyGit(folder.newFolder("here").getAbsolutePath());
+        logs = new MyGitLogs(rep);
+        brnch = new MyGitBranch(rep);
+        head = new MyGitHead(rep);
+        ind = new MyGitIndex(rep);
+        rep.init();
     }
 
     @Test
     public void initTest()  {
-        assertTrue(Files.exists(GIT_DIRECTORY));
-        assertTrue(Files.exists(INDEX));
-        assertTrue(Files.exists(REFS_DIRECTORY));
-        assertTrue(Files.exists(OBJECTS_DIRECTORY));
-        assertTrue(Files.exists(HEAD));
-        assertTrue(Files.exists(LOGS_DIRECTORY));
+        assertTrue(Files.exists(rep.GIT_DIRECTORY));
+        assertTrue(Files.exists(rep.INDEX));
+        assertTrue(Files.exists(rep.REFS_DIRECTORY));
+        assertTrue(Files.exists(rep.OBJECTS_DIRECTORY));
+        assertTrue(Files.exists(rep.HEAD));
+        assertTrue(Files.exists(rep.LOGS_DIRECTORY));
     }
 
     @Test
-    public void addAndCommitTest() throws IOException, IndexIOException {
+    public void addAndCommitTest() throws IOException, IndexIOException, GitDoesNotExistException,
+            LogIOException, ObjectIOException, ObjectStoreException, HeadIOException, BranchIOException {
         Path addTestFile = buildPath(CURRENT_DIRECTORY, "addTest");
         Files.write(addTestFile, "addTest".getBytes());
+        List <Path> pathList = new ArrayList<>();
+        pathList.add(addTestFile);
         List <String> pathListAsStringList = new ArrayList<>();
         pathListAsStringList.add(addTestFile.toString());
 
-        main(makeAddArgs(addTestFile.toString()));
+        rep.add(pathList);
 
-        List<String> index = getCurrentIndexState();
+        List<String> index = ind.getCurrentIndexState();
         assertEquals(index, pathListAsStringList);
 
-        main(makeCommitArgs("this is my add and commit test"));
+        rep.commit("this is my add and commit test");
 
-        Path pathToBranch = buildPath(REFS_DIRECTORY, "master");
-        Path pathToCommit = buildPath(OBJECTS_DIRECTORY, Files.lines(pathToBranch).findFirst().get());
+        Path pathToBranch = buildPath(rep.REFS_DIRECTORY, "master");
+        Path pathToCommit = buildPath(rep.OBJECTS_DIRECTORY, Files.lines(pathToBranch).findFirst().get());
         assertTrue(Files.exists(pathToCommit));
-        Path pathToTree = buildPath(OBJECTS_DIRECTORY, Files.lines(pathToCommit).findFirst().get());
-        List <String> treeContent = new ArrayList<>();
+        Path pathToTree = buildPath(rep.OBJECTS_DIRECTORY, Files.lines(pathToCommit).findFirst().get());
+        List <String> treeContent;
         treeContent = Files.readAllLines(pathToTree);
         assertEquals(addTestFile.toString(), treeContent.get(0));
-        Path pathToBlob = buildPath(OBJECTS_DIRECTORY, treeContent.get(1));
+        Path pathToBlob = buildPath(rep.OBJECTS_DIRECTORY, treeContent.get(1));
         String blobContent = Files.lines(pathToBlob).findFirst().get();
         assertEquals("addTest", blobContent);
     }
 
     @Test
-    public void createAndDeleteBranchTest() {
+    public void createAndDeleteBranchTest() throws HeadIOException, BranchAlreadyExistsException,
+            GitDoesNotExistException, ObjectStoreException, BranchIOException, BranchDeletionException {
 
-        main(makeBranchArgs("another"));
-        Path pathToBranchRef = buildPath(REFS_DIRECTORY, "another");
+        rep.branch("another");
+        Path pathToBranchRef = buildPath(rep.REFS_DIRECTORY, "another");
         assertTrue(Files.exists(pathToBranchRef));
-        main(makeBranchDeletionArgs("another"));
+        rep.branchWithDOption("another");
         assertTrue(Files.notExists(pathToBranchRef));
     }
 
     @Test
-    public void checkoutBranchTest() throws IOException {
+    public void checkoutBranchTest() throws IOException, HeadIOException, BranchAlreadyExistsException,
+            GitDoesNotExistException, ObjectStoreException, BranchIOException, IndexIOException,
+            ObjectIOException, LogIOException {
         String newBranchName = "another";
-        main(makeBranchArgs(newBranchName));
-        main(makeCheckoutArgs(newBranchName));
-        String headContent = Files.lines(HEAD).findFirst().get();
+        rep.branch(newBranchName);
+        rep.checkout(newBranchName);
+        String headContent = Files.lines(rep.HEAD).findFirst().get();
         assertEquals(newBranchName, headContent);
         Path pathToWrite = buildPath(CURRENT_DIRECTORY, "newFile");
         Files.write(pathToWrite, "abacaba".getBytes());
+        List <Path> toWrite = new ArrayList<>();
+        toWrite.add(pathToWrite);
         assertTrue(Files.exists(pathToWrite));
-        main(makeAddArgs(pathToWrite.toString()));
-        main(makeCommitArgs("newFile to another branch"));
-        main(makeCheckoutArgs("master"));
+        rep.add(toWrite);
+        rep.commit("newFile to another branch");
+        rep.checkout("master");
         assertTrue(Files.notExists(pathToWrite));
-        main(makeCheckoutArgs(newBranchName));
+        rep.checkout(newBranchName);
         assertTrue(Files.exists(pathToWrite));
     }
 
     @Test
-    public void checkoutCommitHash() throws BranchIOException, HeadIOException, GitDoesNotExistException {
-        String commitHash = getCurrentCommit();
-        main(makeCheckoutArgs(commitHash));
-        assertTrue(Files.exists(buildPath(REFS_DIRECTORY, commitHash)));
-        assertEquals(commitHash, getCurrentBranch());
+    public void checkoutCommitHash() throws BranchIOException, HeadIOException, GitDoesNotExistException,
+            BranchAlreadyExistsException, ObjectStoreException {
+        String commitHash = head.getCurrentCommit();
+        rep.checkout(commitHash);
+        assertTrue(Files.exists(buildPath(rep.REFS_DIRECTORY, commitHash)));
+        assertEquals(commitHash, head.getCurrentBranch());
     }
 
     @Test
-    public void testMerge() throws IOException {
+    public void testMerge() throws IOException, HeadIOException, BranchAlreadyExistsException,
+            GitDoesNotExistException, ObjectStoreException, BranchIOException, IndexIOException,
+            ObjectIOException, LogIOException, MergeIOException {
         String newBranchName = "toMerge";
-        main(makeBranchArgs(newBranchName));
-        main(makeCheckoutArgs(newBranchName));
+        rep.branch(newBranchName);
+        rep.checkout(newBranchName);
         Path fileToMerge = buildPath(CURRENT_DIRECTORY, "merge");
         Files.write(fileToMerge, "merge".getBytes());
         List <Path> listOfFilesToMerge = new ArrayList<>();
         listOfFilesToMerge.add(fileToMerge);
-        main(makeAddArgs(fileToMerge.toString()));
-        main(makeCommitArgs("this file will be merged into master"));
-        main(makeCheckoutArgs("master"));
+        rep.add(listOfFilesToMerge);
+        rep.commit("this file will be merged into master");
+        rep.checkout("master");
         assertTrue(Files.notExists(fileToMerge));
-        main(makeMergeArgs(newBranchName));
+        rep.merge(newBranchName);
         assertTrue(Files.exists(fileToMerge));
     }
 
 
-
     @Test
     public void testLog() throws HeadIOException, GitDoesNotExistException, LogIOException {
-        String initMessage = new String(log());
+        String initMessage = new String(rep.log());
         String[] tokens = initMessage.split(" ");
         String user = tokens[0];
         assertEquals(System.getProperty("user.name"), user);
     }
 
+    @Test
+    public void commitWithoutChanges() throws GitDoesNotExistException, IndexIOException, HeadIOException,
+            ObjectStoreException, ObjectIOException, LogIOException, BranchIOException {
+        rep.commit("no changes");
+    }
+
+    @Test
+    public void commitWithTwoFiles() throws IOException, IndexIOException, GitDoesNotExistException,
+            LogIOException, ObjectIOException, ObjectStoreException, HeadIOException, BranchIOException {
+        Path addOne = buildPath(CURRENT_DIRECTORY, "one");
+        Files.write(addOne, "one".getBytes());
+        List <Path> pathList = new ArrayList<>();
+        pathList.add(addOne);
+        Path addTwo = buildPath(CURRENT_DIRECTORY, "two");
+        Files.write(addTwo, "two".getBytes());
+        pathList.add(addTwo);
+        rep.add(pathList);
+        rep.commit("smth");
+        rep.commit("another");
+        rep.commit("smth");
+    }
+
     @Test(expected = GitDoesNotExistException.class)
     public void testGitDoesNotExist() throws HeadIOException, BranchAlreadyExistsException,
-            GitDoesNotExistException, BranchIOException {
-        deleteDirectory(new File(GIT_DIRECTORY.toString()));
-        branch("branch");
+            GitDoesNotExistException, BranchIOException, ObjectStoreException {
+        deleteDirectory(new File(rep.GIT_DIRECTORY.toString()));
+        rep.branch("branch");
     }
 
     @Test(expected = BranchAlreadyExistsException.class)
     public void testBranchAlreadyExist() throws HeadIOException, BranchAlreadyExistsException,
-            GitDoesNotExistException, BranchIOException {
-        branch("master");
+            GitDoesNotExistException, BranchIOException, ObjectStoreException {
+        rep.branch("master");
     }
 
 

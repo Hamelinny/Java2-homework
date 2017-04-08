@@ -1,7 +1,8 @@
 package ru.spbau.sofronova.entities;
 
 import org.jetbrains.annotations.NotNull;
-import ru.spbau.sofronova.exceptions.ObjectAddException;
+import ru.spbau.sofronova.exceptions.ObjectStoreException;
+import ru.spbau.sofronova.logic.MyGit;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,9 +26,10 @@ public class Tree extends GitObject {
      * Makes a tree from list of names and list of hashes.
      * @param fileName names of files.
      * @param fileHash hashes of files.
+     * @param repository repository entity
      */
-    public Tree(@NotNull List <String> fileName, @NotNull List <String> fileHash) {
-        super(getContent(fileName, fileHash));
+    public Tree(@NotNull List <String> fileName, @NotNull List <String> fileHash, @NotNull MyGit repository) {
+        super(getContent(fileName, fileHash), repository);
         this.fileHash = fileHash;
         this.fileName = fileName;
     }
@@ -42,12 +44,12 @@ public class Tree extends GitObject {
 
     /**
      * Method to create a file in repository which name is tree hash and which content is names and hashes of files in commit.
-     * @throws ObjectAddException if there are some IO problems during add.
+     * @throws ObjectStoreException if there are some IO problems during add.
      */
     @Override
-    public void addObject() throws ObjectAddException {
+    public void storeObject() throws ObjectStoreException {
         try {
-            Path pathToTree = buildPath(OBJECTS_DIRECTORY, hash);
+            Path pathToTree = buildPath(repository.OBJECTS_DIRECTORY, hash);
             Files.deleteIfExists(pathToTree);
             Files.createFile(pathToTree);
             for (int i = 0; i < fileName.size(); i++) {
@@ -58,7 +60,7 @@ public class Tree extends GitObject {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            throw new ObjectAddException();
+            throw new ObjectStoreException("cannot store tree\n");
         }
     }
 }

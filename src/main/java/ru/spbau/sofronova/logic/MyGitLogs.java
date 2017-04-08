@@ -15,20 +15,30 @@ import static ru.spbau.sofronova.logic.MyGitUtils.*;
  */
 public class MyGitLogs {
 
+    private final MyGit repository;
+
+    /**
+     * Create a log interactor from repository.
+     * @param repository repository entity
+     */
+    public MyGitLogs(@NotNull MyGit repository) {
+        this.repository = repository;
+    }
+
     /**
      * Method to add a message to log file of specified branch.
      * @param branchName branch which has a new event happened
      * @param message message to write to log
      * @throws LogIOException if there are IO problems during interaction with log file
      */
-    public static void updateLog(@NotNull String branchName, @NotNull String message) throws LogIOException {
-        Path logLocation = buildPath(LOGS_DIRECTORY, branchName);
+    public void updateLog(@NotNull String branchName, @NotNull String message) throws LogIOException {
+        Path logLocation = buildPath(repository.LOGS_DIRECTORY, branchName);
         try {
             if (Files.notExists(logLocation))
                 Files.createFile(logLocation);
             Files.write(logLocation, message.getBytes(), StandardOpenOption.APPEND);
         } catch (IOException e) {
-            throw new LogIOException();
+            throw new LogIOException("cannot update log\n");
         }
     }
 }

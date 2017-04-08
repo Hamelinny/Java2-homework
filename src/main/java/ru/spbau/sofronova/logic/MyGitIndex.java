@@ -17,17 +17,27 @@ import static ru.spbau.sofronova.logic.MyGitUtils.*;
  */
 public class MyGitIndex {
 
+    private final MyGit repository;
+
+    /**
+     * Create an index interactor from repository
+     * @param repository repository entity
+     */
+    public MyGitIndex(@NotNull MyGit repository) {
+        this.repository = repository;
+    }
+
     /**
      * Method to get a list of files tracking in INDEX
      * @return list of tracking files
      * @throws IndexIOException if there are IO problems during interaction with INDEX
      */
-    public static List<String> getCurrentIndexState() throws IndexIOException {
+    public List<String> getCurrentIndexState() throws IndexIOException {
         try {
-            return Files.readAllLines(INDEX);
+            return Files.readAllLines(repository.INDEX);
         }
         catch (IOException e) {
-            throw new IndexIOException();
+            throw new IndexIOException("cannot get index state\n");
         }
     }
 
@@ -36,17 +46,17 @@ public class MyGitIndex {
      * @param files files to add to INDEX
      * @throws IndexIOException if there are IO problems during interaction with INDEX
      */
-    static void updateIndex(@NotNull List <Path> files) throws IndexIOException {
+    void updateIndex(@NotNull List <Path> files) throws IndexIOException {
         List <String> indexContent = getCurrentIndexState();
         List <String> toAdd = files.stream().map(Path::toString).collect(Collectors.toList());
-        indexContent.removeAll(toAdd);
         indexContent.addAll(toAdd);
-        for (String line : indexContent) {
+        List <String> toWrite = indexContent.stream().distinct().collect(Collectors.toList());
+        for (String line : toWrite) {
             try {
-                Files.write(INDEX, line.getBytes(), StandardOpenOption.APPEND);
-                Files.write(INDEX, newLine(), StandardOpenOption.APPEND);
+                Files.write(repository.INDEX, line.getBytes(), StandardOpenOption.APPEND);
+                Files.write(repository.INDEX, newLine(), StandardOpenOption.APPEND);
             } catch (IOException e) {
-                throw new IndexIOException();
+                throw new IndexIOException("cannot update INDEX\n");
             }
         }
 
@@ -56,13 +66,13 @@ public class MyGitIndex {
      * Method to clean INDEX file.
      * @throws IndexIOException if there are IO problems during interaction with INDEX file
      */
-    static void cleanIndex() throws IndexIOException {
+    void cleanIndex() throws IndexIOException {
         try {
-            Files.delete(INDEX);
-            Files.createFile(INDEX);
+            Files.delete(repository.INDEX);
+            Files.createFile(repository.INDEX);
         }
         catch (IOException e) {
-            throw new IndexIOException();
+            throw new IndexIOException("cannot clean INDEX\n");
         }
     }
 

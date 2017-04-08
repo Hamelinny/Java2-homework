@@ -2,6 +2,8 @@ package ru.spbau.sofronova.entities;
 
 import org.jetbrains.annotations.NotNull;
 import ru.spbau.sofronova.exceptions.*;
+import ru.spbau.sofronova.logic.MyGit;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -12,9 +14,11 @@ abstract public class GitObject {
 
     @NotNull
     protected String hash;
+    protected final MyGit repository;
 
-    protected GitObject(@NotNull byte[] content) {
+    protected GitObject(@NotNull byte[] content, @NotNull MyGit repository) {
         hash = buildHash(content);
+        this.repository = repository;
     }
 
     private String buildHash(@NotNull byte[] content){
@@ -33,9 +37,9 @@ abstract public class GitObject {
 
     /**
      * An abstract method which makes all of the inherits to be able add itself to git.
-     * @throws ObjectAddException if there are some IO problems during add.
+     * @throws ObjectStoreException if there are some IO problems during add.
      */
-    abstract public void addObject() throws ObjectAddException;
+    abstract public void storeObject() throws ObjectStoreException;
 
     /**
      * Method returns a hash of object.

@@ -1,14 +1,13 @@
 package ru.spbau.sofronova.console;
 
-
-import ru.spbau.sofronova.exceptions.*;
+import ru.spbau.sofronova.logic.MyGit;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ru.spbau.sofronova.logic.MyGitCommands.*;
+import static ru.spbau.sofronova.logic.MyGit.*;
 
 /**
  * A class which provides parsing of arguments from console.
@@ -20,6 +19,7 @@ public class Parser {
      * @param arg arguments from console
      */
     public static void parse(String[] arg) {
+        MyGit repository = new MyGit(System.getProperty("user.dir"));
         try {
             if (arg.length == 0) {
                 System.out.println("please enter a command\n");
@@ -30,7 +30,7 @@ public class Parser {
                     System.out.println("cannot parse parameters after init\n");
                     return;
                 }
-                init();
+                repository.init();
                 return;
             }
             if (arg[0].equals("add")) {
@@ -41,7 +41,7 @@ public class Parser {
                 for (int i = 1; i < arg.length; i++) {
                     files.add(Paths.get(arg[i]));
                 }
-                add(files);
+                repository.add(files);
                 return;
             }
             if (arg[0].equals("commit")) {
@@ -53,7 +53,7 @@ public class Parser {
                     System.out.println("cannot parse parameters after message\n");
                     return;
                 }
-                commit(arg[1]);
+                repository.commit(arg[1]);
                 return;
             }
             if (arg[0].equals("checkout")) {
@@ -65,7 +65,7 @@ public class Parser {
                     System.out.println("cannot parse parameters after branch name");
                     return;
                 }
-                checkout(arg[1]);
+                repository.checkout(arg[1]);
                 return;
             }
             if (arg[0].equals("branch")) {
@@ -78,12 +78,12 @@ public class Parser {
                         System.out.println("please enter a branch name");
                         return;
                     }
-                    branch(arg[1]);
+                    repository.branch(arg[1]);
                     return;
                 }
                 if (arg.length == 3) {
                     if (arg[1].equals("-d")) {
-                        branchWithDOption(arg[2]);
+                        repository.branchWithDOption(arg[2]);
                         return;
                     }
                     System.out.println("cannot parse the option\n");
@@ -101,7 +101,7 @@ public class Parser {
                     System.out.println("cannot parse parameters after branch name\n");
                     return;
                 }
-                merge(arg[1]);
+                repository.merge(arg[1]);
                 return;
             }
             if (arg[0].equals("log")) {
@@ -109,43 +109,14 @@ public class Parser {
                     System.out.println("cannot parse parameters after log\n");
                     return;
                 }
-                String logContent = new String(log());
+                String logContent = new String(repository.log());
                 System.out.println(logContent);
+                return;
             }
             System.out.println("unknown command\n");
         }
-        catch (GitDoesNotExistException e) {
-            System.out.println("git does not exist\n");
-        }
-        catch (BranchAlreadyExistsException e) {
-            System.out.println("branch already exists\n");
-        }
-        catch (BranchDeletionException e) {
-            System.out.println("cannot delete this branch\n");
-        }
-        catch (BranchIOException e) {
-            System.out.println("cannot change this branch\n");
-        }
-        catch (GitAlreadyInitializedException e) {
-            System.out.println("git already inited\n");
-        }
-        catch (HeadIOException e) {
-            System.out.println("cannot change HEAD file\n");
-        }
-        catch (LogIOException e) {
-            System.out.println("cannot change log");
-        }
-        catch (IndexIOException e) {
-            System.out.println("cannot change INDEX file\n");
-        }
-        catch (MergeIOException e) {
-            System.out.println("IO exception in merge\n");
-        }
-        catch (ObjectAddException e) {
-            System.out.println("cannot add one of objects\n");
-        }
-        catch (ObjectIOException e) {
-            System.out.println("IO exception in GitObject");
+        catch (Exception e) {
+            System.out.println(e.getMessage());
         }
 
     }

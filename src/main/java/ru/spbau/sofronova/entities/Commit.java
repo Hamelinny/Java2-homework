@@ -1,13 +1,12 @@
 package ru.spbau.sofronova.entities;
 
 import org.jetbrains.annotations.NotNull;
-import ru.spbau.sofronova.exceptions.ObjectAddException;
+import ru.spbau.sofronova.exceptions.ObjectStoreException;
+import ru.spbau.sofronova.logic.MyGit;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Date;
-
-import static ru.spbau.sofronova.logic.MyGitUtils.OBJECTS_DIRECTORY;
 import static ru.spbau.sofronova.logic.MyGitUtils.buildPath;
 
 /**
@@ -28,9 +27,10 @@ public class Commit extends GitObject {
      * Make a commit object from hash of the tree and message.
      * @param treeHash hash of the tree.
      * @param message commit message.
+     * @param repository repository entity
      */
-    public Commit(@NotNull String treeHash, @NotNull String message) {
-        super((treeHash + message).getBytes());
+    public Commit(@NotNull String treeHash, @NotNull String message, @NotNull MyGit repository) {
+        super((treeHash + message).getBytes(), repository);
         this.message = message;
         this.author = System.getProperty("user.name");
         this.date = new Date();
@@ -47,14 +47,14 @@ public class Commit extends GitObject {
 
     /**
      * Method to create a file in repository which name is commit hash and which content is hash of the tree.
-     * @throws ObjectAddException if there are some IO problems during add.
+     * @throws ObjectStoreException if there are some IO problems during add.
      */
     @Override
-    public void addObject() throws ObjectAddException {
+    public void storeObject() throws ObjectStoreException {
         try {
-            Files.write(buildPath(OBJECTS_DIRECTORY, hash), treeHash.getBytes());
+            Files.write(buildPath(repository.OBJECTS_DIRECTORY, hash), treeHash.getBytes());
         } catch (IOException e) {
-            throw new ObjectAddException();
+            throw new ObjectStoreException("cannot store commit\n");
         }
     }
 }

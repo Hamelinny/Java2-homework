@@ -14,17 +14,27 @@ import static ru.spbau.sofronova.logic.MyGitUtils.*;
  */
 public class MyGitHead {
 
+    private final MyGit repository;
+
+    /**
+     * Create head interactor from repository.
+     * @param repository repository entity
+     */
+    public MyGitHead(@NotNull MyGit repository) {
+        this.repository = repository;
+    }
+
     /**
      * Method to update name of current branch in HEAD file
      * @param currentBranch name of current branch
      * @throws HeadIOException if there are IO problems during interaction with HEAD file
      */
-    static void updateHead(@NotNull String currentBranch) throws HeadIOException {
+    public void updateHead(@NotNull String currentBranch) throws HeadIOException {
         try {
-            Files.write(HEAD, currentBranch.getBytes());
+            Files.write(repository.HEAD, currentBranch.getBytes());
         }
         catch (IOException e) {
-            throw new HeadIOException();
+            throw new HeadIOException("IO exception during updating HEAD\n");
         }
     }
 
@@ -33,12 +43,12 @@ public class MyGitHead {
      * @return name of a current branch
      * @throws HeadIOException if there are IO problems during interaction with HEAD file
      */
-    public static String getCurrentBranch() throws HeadIOException {
+    public String getCurrentBranch() throws HeadIOException {
         try {
-            return new String(Files.readAllBytes(HEAD));
+            return new String(Files.readAllBytes(repository.HEAD));
         }
         catch (IOException e) {
-            throw new HeadIOException();
+            throw new HeadIOException("cannot get current branch\n");
         }
     }
 
@@ -49,15 +59,15 @@ public class MyGitHead {
      * @throws HeadIOException if there are IO problems during interaction with HEAD file
      * @throws BranchIOException if there are IO problems during interaction with information about branches
      */
-    public static String getCurrentCommit() throws GitDoesNotExistException, HeadIOException, BranchIOException {
-        if (Files.notExists(GIT_DIRECTORY))
-            throw new GitDoesNotExistException();
+    public String getCurrentCommit() throws GitDoesNotExistException, HeadIOException, BranchIOException {
+        if (Files.notExists(repository.GIT_DIRECTORY))
+            throw new GitDoesNotExistException("git does not exist\n");
 
-        Path branchLocation = buildPath(REFS_DIRECTORY, getCurrentBranch());
+        Path branchLocation = buildPath(repository.REFS_DIRECTORY, getCurrentBranch());
         try {
             return new String(Files.readAllBytes(branchLocation));
         } catch (IOException e) {
-            throw new BranchIOException();
+            throw new BranchIOException("cannot get current commit\n");
         }
     }
 }
