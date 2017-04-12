@@ -1,0 +1,2 @@
+Main-Class: ru.spbau.sofronova.Main
+Manifest-Version: 1.0
