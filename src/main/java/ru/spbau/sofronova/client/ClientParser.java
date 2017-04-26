@@ -1,5 +1,6 @@
 package ru.spbau.sofronova.client;
 
+import org.jetbrains.annotations.NotNull;
 import ru.spbau.sofronova.server.Server;
 
 import java.util.Iterator;
@@ -9,7 +10,7 @@ import java.util.List;
 public class ClientParser {
 
 
-    static void parse(Iterator <String> iter) {
+    static void parse(@NotNull Iterator <String> iter) {
         Client client = new Client(Server.SERVER_PORT);
         while (true) {
             String query = iter.next();

@@ -1,5 +1,7 @@
 package ru.spbau.sofronova;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -19,7 +21,7 @@ public class Reader {
      * Creates reader from channel.
      * @param channel channel
      */
-    public Reader(ByteChannel channel) {
+    public Reader(@NotNull ByteChannel channel) {
         this.buf = ByteBuffer.allocate(SIZE);
         this.channel = channel;
     }

@@ -1,5 +1,8 @@
 package ru.spbau.sofronova;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -17,7 +20,7 @@ public class Writer {
      * @param data bytes to write
      * @param channel channel
      */
-    public Writer(byte[] data, ByteChannel channel) {
+    public Writer(@Nullable byte[] data, @NotNull ByteChannel channel) {
         if (data == null)
             flag = false;
         else {

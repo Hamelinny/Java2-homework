@@ -1,5 +1,8 @@
 package ru.spbau.sofronova.server;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.nio.channels.SelectionKey;
 
 /** Class which corresponds a query entity.*/
@@ -13,7 +16,7 @@ public class Query {
      * @param key
      * @param content
      */
-    public Query(SelectionKey key, byte[] content) {
+    public Query(@NotNull SelectionKey key, @Nullable byte[] content) {
         this.key = key;
         this.content = content;
     }

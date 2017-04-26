@@ -1,5 +1,7 @@
 package ru.spbau.sofronova.server;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,7 +15,7 @@ public class GetPerformer extends Performer {
      * @return content
      */
     @Override
-    public byte[] perform(Path path)  {
+    public byte[] perform(@NotNull Path path)  {
         if (Files.isDirectory(path) || Files.notExists(path)) {
             return null;
         }

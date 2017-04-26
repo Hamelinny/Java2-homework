@@ -1,5 +1,7 @@
 package ru.spbau.sofronova.server;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -17,7 +19,7 @@ public class ListPerformer extends Performer {
      * @return list of files in byte array
      */
     @Override
-    public byte[] perform(Path path) {
+    public byte[] perform(@NotNull Path path) {
         if (!Files.isDirectory(path) || !Files.exists(path)) {
             return null;
         }

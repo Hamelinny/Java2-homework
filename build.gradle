@@ -2,11 +2,25 @@ group 'nonblocking'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'application'
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+}
+
+mainClassName = "ru.spbau.sofronova.client.Console"
+
+task createJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'MyGit application',
+                'Implementation-Version': version,
+                'Main-Class': 'ru.spbau.sofronova.client.Console'
+    }
+    baseName = project.name + '-application'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
 
 dependencies {

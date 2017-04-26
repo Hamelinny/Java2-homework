@@ -1,5 +1,6 @@
 package ru.spbau.sofronova.client;
 
+import org.jetbrains.annotations.NotNull;
 import ru.spbau.sofronova.Reader;
 
 import java.io.*;
@@ -43,7 +44,7 @@ public class Client {
      * @param path
      * @param pathToWrite
      */
-    public void executeGet(String path, String pathToWrite) {
+    public void executeGet(@NotNull String path, @NotNull String pathToWrite) {
         byte[] content = sendAndReceive(GET_CODE, path);
         try {
             if (content == null || Arrays.equals(content, new byte[0])) {
@@ -59,7 +60,7 @@ public class Client {
 
     }
 
-    private byte[] sendAndReceive(int code, String arg) {
+    private byte[] sendAndReceive(int code, @NotNull String arg) {
         try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
              DataOutputStream outputStream = new DataOutputStream(byteStream)) {
             SocketChannel channel = SocketChannel.open();
