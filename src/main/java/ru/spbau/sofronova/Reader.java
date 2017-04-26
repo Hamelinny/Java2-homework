@@ -9,7 +9,6 @@ import java.util.Arrays;
 
 /** Class which purpose is reading from channel.*/
 public class Reader {
-
     private final static int SIZE = 1024;
     private byte[] content = null;
     private ByteBuffer buf;
