@@ -16,21 +16,23 @@ import java.util.List;
 import static org.junit.Assert.*;
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
 
+
 public class MyGitTests {
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
-    public MyGit rep;
-    public MyGitLogs logs;
-    public MyGitBranch brnch;
-    public MyGitHead head;
-    public MyGitIndex ind;
+
+    private MyGit rep;
+    private MyGitLogs logs;
+    private MyGitBranch brnch;
+    private MyGitHead head;
+    private MyGitIndex ind;
 
     @Before
     public void preparation() throws IOException, GitDoesNotExistException, BranchIOException,
             InitIOException, GitAlreadyInitializedException, LogIOException, IndexIOException,
             BranchAlreadyExistsException, ObjectIOException, ObjectStoreException, HeadIOException {
-        rep = new MyGit(folder.newFolder("here").getAbsolutePath());
+        rep = new MyGit(folder.newFolder("oops").getAbsolutePath());
         logs = new MyGitLogs(rep);
         brnch = new MyGitBranch(rep);
         head = new MyGitHead(rep);
@@ -61,8 +63,11 @@ public class MyGitTests {
         rep.add(pathList);
 
         List<String> index = ind.getCurrentIndexState();
-        assertEquals(index, pathListAsStringList);
 
+        List <String> onlyFiles = new ArrayList<>();
+        for (int i = 0; i < index.size(); i += 2)
+            onlyFiles.add(index.get(i));
+        assertEquals(onlyFiles, pathListAsStringList);
         rep.commit("this is my add and commit test");
 
         Path pathToBranch = buildPath(rep.REFS_DIRECTORY, "master");
@@ -186,7 +191,9 @@ public class MyGitTests {
     }
 
     @Test
-    public void indexStateTest() throws IndexIOException, IOException {
+    public void indexStateTest() throws IndexIOException, IOException, ObjectIOException,
+            ObjectStoreException {
+
         ind.cleanIndex();
         List <Path> list = new ArrayList<>();
         Path toIndex = buildPath(rep.GIT_DIRECTORY.getParent(), "ind");
@@ -209,34 +216,57 @@ public class MyGitTests {
         rep.branch("master");
     }
 
-
-    private String[] makeInitArgs() {
-        return new String[]{"init"};
+    @Test
+    public void cleanTest() throws IndexIOException, IOException {
+        Files.createFile(buildPath(rep.GIT_DIRECTORY.getParent(), "hello"));
+        rep.clean();
+        assertTrue(Files.notExists(buildPath(rep.GIT_DIRECTORY.getParent(), "hello")));
     }
 
-    private String[] makeBranchArgs(String branch) {
-        return new String[]{"branch", branch};
+    @Test
+    public void statusTest() throws IOException, IndexIOException, ObjectIOException,
+            GitDoesNotExistException, ObjectStoreException {
+
+        List <Path> file = new ArrayList<>();
+        file.add(buildPath(rep.GIT_DIRECTORY.getParent(), "hello"));
+
+        Files.createFile(file.get(0));
+        assertTrue(rep.status().startsWith("untracked"));
+;
+        rep.add(file);
+        assertTrue(rep.status().startsWith("staged"));
+
+        Files.write(file.get(0), "hello".getBytes());
+        assertTrue(rep.status().startsWith("modified"));
+
+        Files.delete(file.get(0));
+        assertTrue(rep.status().startsWith("deleted"));
     }
 
-    private String[] makeBranchDeletionArgs(String branch) {
-        return new String[]{"branch", "-d", branch};
+    @Test
+    public void rmTest() throws IOException, GitDoesNotExistException, IndexIOException,
+            ObjectStoreException, ObjectIOException {
+        List <Path> path = new ArrayList<>();
+        List <String> pathAsString = new ArrayList<>();
+        path.add(buildPath(rep.GIT_DIRECTORY.getParent(), "here"));
+        pathAsString.add(path.get(0).toString());
+        Files.createFile(path.get(0));
+        rep.add(path);
+        assertEquals(pathAsString.get(0), ind.getCurrentIndexState().get(0));
+        rep.rm(pathAsString);
+        assertEquals("", String.join("", ind.getCurrentIndexState()));
+        assertTrue(Files.notExists(path.get(0)));
     }
 
-    private String[] makeAddArgs(String file) {
-        return new String[]{"add", file};
+    @Test
+    public void resetTest() throws IOException, GitDoesNotExistException, IndexIOException,
+            ObjectStoreException, ObjectIOException {
+        List <Path> path = new ArrayList<>();
+        path.add(buildPath(rep.GIT_DIRECTORY.getParent(), "reset"));
+        Files.createFile(path.get(0));
+        rep.add(path);
+        assertEquals(path.get(0).toString(), ind.getCurrentIndexState().get(0));
+        rep.reset(path.get(0));
+        assertEquals("", String.join("", ind.getCurrentIndexState()));
     }
-
-    private String[] makeCommitArgs(String message) {
-        return new String[]{"commit", message};
-    }
-
-    private String[] makeCheckoutArgs(String branchOrHash) {
-        return new String[]{"checkout", branchOrHash};
-    }
-
-    private String[] makeMergeArgs(String branch) {
-        return new String[]{"merge", branch};
-    }
-
 }
-

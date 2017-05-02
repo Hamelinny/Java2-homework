@@ -1,17 +1,24 @@
 package ru.spbau.sofronova.logic;
 
+
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.apache.commons.io.FileUtils;
 import ru.spbau.sofronova.entities.Blob;
 import ru.spbau.sofronova.entities.Branch;
 import ru.spbau.sofronova.entities.Commit;
 import ru.spbau.sofronova.entities.Tree;
 import ru.spbau.sofronova.exceptions.*;
+import ru.spbau.sofronova.logger.MyGitLogBuilder;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ru.spbau.sofronova.entities.Blob.getBlob;
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
@@ -46,10 +53,13 @@ public class MyGit {
      */
     public final Path LOGS_DIRECTORY;
 
+
+    private final Path loggerPath;
     private final MyGitHead headManager;
     private final MyGitIndex indexManager;
     private final MyGitBranch branchManager;
     private final MyGitLogs logsManager;
+    private final Logger logger;
 
     /**
      * Creates a git repository in specified folder.
@@ -66,6 +76,48 @@ public class MyGit {
         indexManager = new MyGitIndex(this);
         branchManager = new MyGitBranch(this);
         logsManager = new MyGitLogs(this);
+        logger = MyGitLogBuilder.getLogger(Paths.get(folder));
+        loggerPath = buildPath(folder, "myGitLogs");
+    }
+
+    /**
+     * Method to get a Logger from MyGit.
+     * @return Logger
+     */
+    public Logger getLogger() {
+        return logger;
+    }
+
+    /**
+     * Method to get a branch manager
+     * @return branch manager
+     */
+    public MyGitBranch getBranchManager() {
+        return branchManager;
+    }
+
+    /**
+     * Method to get a head manager
+     * @return head manager
+     */
+    public MyGitHead getHeadManager() {
+        return headManager;
+    }
+
+    /**
+     * Method to get an index manager
+     * @return index manager
+     */
+    public MyGitIndex getIndexManager() {
+        return indexManager;
+    }
+
+    /**
+     * Method to get a log manager
+     * @return log manager
+     */
+    public MyGitLogs getLogsManager() {
+        return logsManager;
     }
 
     /**
@@ -83,14 +135,15 @@ public class MyGit {
     public void init() throws GitAlreadyInitializedException, GitDoesNotExistException,
             BranchAlreadyExistsException, LogIOException, BranchIOException, IndexIOException,
             HeadIOException, ObjectStoreException, ObjectIOException, InitIOException {
+        logger.trace("git initialization\n");
         if (Files.exists(GIT_DIRECTORY))
             throw new GitAlreadyInitializedException("git already initialized\n");
         try {
             makeDirs();
             Commit initial = commit("initial commit");
-            branchManager.createBranch("master", initial.getHash());
-            logsManager.updateLog("master", initial.getInfo());
-            headManager.updateHead("master");
+            getBranchManager().createBranch("master", initial.getHash());
+            getLogsManager().updateLog("master", initial.getInfo());
+            getHeadManager().updateHead("master");
         } catch (IOException e) {
             throw new InitIOException("IO problem during git initialization\n");
         }
@@ -111,32 +164,28 @@ public class MyGit {
      */
     public Commit commit(@NotNull String message) throws IndexIOException, GitDoesNotExistException,
             LogIOException, HeadIOException, BranchIOException, ObjectStoreException, ObjectIOException {
+        logger.trace("commit with \"" + message + "\" message\n");
         if (Files.notExists(GIT_DIRECTORY))
             throw new GitDoesNotExistException("git does not exist\n");
 
-        List<String> indexContent = indexManager.getCurrentIndexState();
+        List<String> indexContent = getIndexManager().getCurrentIndexState();
         List<String> files = new ArrayList<>();
         List<String> hashes = new ArrayList<>();
-        for (String anIndexContent : indexContent) {
-            files.add(Paths.get(anIndexContent).toString());
-        }
-
-        for (String file : files) {
-            Blob blob = getBlob(Paths.get(file), this);
-            blob.storeObject();
-            hashes.add(blob.getHash());
+        for (int i = 0; i < indexContent.size(); i += 2) {
+            files.add(indexContent.get(i));
+            hashes.add(indexContent.get(i + 1));
         }
         Tree tree = new Tree(files, hashes, this);
         tree.storeObject();
         Commit commit = new Commit(tree.getHash(), message, this);
         commit.storeObject();
-        String currentBranchName = headManager.getCurrentBranch();
+        String currentBranchName = getHeadManager().getCurrentBranch();
         if (!currentBranchName.isEmpty()){
             Branch currentBranch = new Branch(currentBranchName, this, commit.getHash());
             currentBranch.storeObject();
-            logsManager.updateLog(currentBranchName, commit.getInfo());
+            getLogsManager().updateLog(currentBranchName, commit.getInfo());
         }
-        indexManager.cleanIndex();
+        getIndexManager().cleanIndex();
         return commit;
     }
 
@@ -146,10 +195,14 @@ public class MyGit {
      * @throws IndexIOException if there are problems during interaction with INDEX file
      * @throws GitDoesNotExistException if git does not exist
      */
-    public void add(@NotNull List<Path> files) throws IndexIOException, GitDoesNotExistException {
+    public void add(@NotNull List<Path> files) throws IndexIOException, GitDoesNotExistException,
+            ObjectIOException, ObjectStoreException {
+        logger.trace("add " + String.join(" ", files.stream().
+                map(Path::toString).
+                collect(Collectors.toList())) + "\n");
         if (Files.notExists(GIT_DIRECTORY))
             throw new GitDoesNotExistException("git does not exist\n");
-        indexManager.updateIndex(files);
+        getIndexManager().updateIndex(files);
     }
 
     /**
@@ -162,10 +215,11 @@ public class MyGit {
      */
     public void checkout(@NotNull String toCheckout) throws GitDoesNotExistException,
             BranchAlreadyExistsException, HeadIOException, BranchIOException, ObjectStoreException {
+        logger.trace("checkout " + toCheckout + "\n");
         if (isHash(toCheckout))
-            branchManager.checkoutCommit(toCheckout);
+            getBranchManager().checkoutCommit(toCheckout);
         else
-            branchManager.checkoutBranch(toCheckout);
+            getBranchManager().checkoutBranch(toCheckout);
     }
 
     /**
@@ -178,7 +232,8 @@ public class MyGit {
      */
     public void branch(@NotNull String name) throws BranchIOException, HeadIOException,
             GitDoesNotExistException, BranchAlreadyExistsException, ObjectStoreException {
-        branchManager.createBranch(name, headManager.getCurrentCommit());
+        logger.trace("branch " + name + "\n");
+        getBranchManager().createBranch(name, getHeadManager().getCurrentCommit());
     }
 
     /**
@@ -187,7 +242,8 @@ public class MyGit {
      * @throws BranchDeletionException if there are problems during branch deletion
      */
     public void branchWithDOption(@NotNull String name) throws BranchDeletionException {
-        branchManager.deleteBranch(name);
+        logger.trace("delete branch " + name + "\n");
+        getBranchManager().deleteBranch(name);
     }
 
     /**
@@ -204,11 +260,12 @@ public class MyGit {
      */
     public void merge(@NotNull String branch) throws GitDoesNotExistException, HeadIOException,
             LogIOException, IndexIOException, ObjectStoreException, BranchIOException, MergeIOException, ObjectIOException {
+        logger.trace("merge " + branch + " into " + getHeadManager().getCurrentBranch() + "\n");
         if (Files.notExists(GIT_DIRECTORY)){
             throw new GitDoesNotExistException("git does not exist\n");
         }
         try {
-            String currentBranch = headManager.getCurrentBranch();
+            String currentBranch = getHeadManager().getCurrentBranch();
             Path branchToMerge = buildPath(REFS_DIRECTORY, branch);
             Path pathToCommit = buildPath(OBJECTS_DIRECTORY, Files.lines(branchToMerge).findFirst().get());
             Path pathToTree = buildPath(OBJECTS_DIRECTORY, Files.lines(pathToCommit).findFirst().get());
@@ -239,15 +296,158 @@ public class MyGit {
      * @throws LogIOException if there are problems during log IO
      */
     public byte[] log() throws GitDoesNotExistException, HeadIOException, LogIOException {
+        logger.trace("log " + getHeadManager().getCurrentBranch() + "\n");
         if (Files.notExists(GIT_DIRECTORY))
             throw new GitDoesNotExistException("git does not exist\n");
         try {
-            return Files.readAllBytes(buildPath(LOGS_DIRECTORY, headManager.getCurrentBranch()));
+            return Files.readAllBytes(buildPath(LOGS_DIRECTORY, getHeadManager().getCurrentBranch()));
         } catch (IOException e) {
             throw new LogIOException("IO exception with log\n");
         }
     }
 
+
+    /**
+     * Method that removes a file from index and from disk
+     * @param files files to remove
+     * @throws IndexIOException if there are problems during interaction with INDEX file
+     * @throws ObjectIOException if there are problems with objects IO
+     * @throws ObjectStoreException if there are problems during object adding
+     */
+    public void rm(@NotNull List <String> files) throws IndexIOException, ObjectIOException,
+            ObjectStoreException {
+        logger.trace("rm " + String.join(" ", files) + "\n");
+        for (String file : files) {
+            deleteDirectory(new File(file));
+            reset(Paths.get(file));
+        }
+    }
+
+    /**
+     * Method to remove untracked files from disk.
+     * @throws IndexIOException if there are problems during interaction with INDEX file
+     */
+    public void clean() throws IndexIOException {
+        logger.trace("clean\n");
+        List<Path> paths = listFilesInDirectory(GIT_DIRECTORY.getParent());
+        List<Path> pathsNotToDelete = listFilesInDirectory(GIT_DIRECTORY);
+        pathsNotToDelete.addAll(listFilesInDirectory(loggerPath));
+        paths.removeAll(pathsNotToDelete);
+        List <String> fromIndex = getIndexManager().getCurrentIndexState();
+        List <Path> pathsFromIndex = new ArrayList<>();
+        for (int i = 0; i < fromIndex.size(); i += 2) {
+            pathsFromIndex.add(Paths.get(fromIndex.get(i)));
+        }
+        paths.removeAll(pathsFromIndex);
+        for (Path path: paths) {
+            deleteDirectory(new File(path.toString()));
+        }
+    }
+
+    /**
+     * Method to get a message with status which contains untracked, staged, modified and deleted files
+     * @return string with that message
+     * @throws IndexIOException if there are problems during interaction with INDEX file
+     * @throws ObjectIOException if there are problems with objects IO
+     */
+    public String status() throws IndexIOException, ObjectIOException {
+        logger.trace("status\n");
+        String answer = "";
+        List <Path> modified = new ArrayList<>();
+        List <Path> staged = new ArrayList<>();
+        List <Path> deleted = new ArrayList<>();
+        List<Path> untracked = listFilesInDirectory(GIT_DIRECTORY.getParent());
+
+        List<Path> pathsNotToShow = listFilesInDirectory(GIT_DIRECTORY);
+        pathsNotToShow.addAll(listFilesInDirectory(loggerPath));
+        untracked.removeAll(pathsNotToShow);
+
+        List <String> fromIndex = getIndexManager().getCurrentIndexState();
+        List <Path> pathsFromIndex = new ArrayList<>();
+        List <String> hashes = new ArrayList<>();
+        for (int i = 0; i < fromIndex.size(); i += 2) {
+            pathsFromIndex.add(Paths.get(fromIndex.get(i)));
+            hashes.add(fromIndex.get(i + 1));
+        }
+        untracked.removeAll(pathsFromIndex);
+
+        for (int i = 0; i < pathsFromIndex.size(); i++) {
+            Path path = pathsFromIndex.get(i);
+            String hash = hashes.get(i);
+            if (Files.notExists(path)) {
+                deleted.add(path);
+                continue;
+            }
+            if (Blob.getBlob(path, this).getHash().equals(hash))
+                staged.add(path);
+            else
+                modified.add(path);
+        }
+
+        if (!staged.isEmpty()) {
+            answer += "staged:\n";
+            for (Path path : staged) {
+                answer += path.toString();
+                answer += "\n";
+            }
+        }
+
+        if (!modified.isEmpty()) {
+            answer += "modified:\n";
+            for (Path path : modified) {
+                answer += path.toString();
+                answer += "\n";
+            }
+        }
+
+        if (!deleted.isEmpty()) {
+            answer += "deleted:\n";
+            for (Path path : deleted) {
+                answer += path.toString();
+                answer += "\n";
+            }
+        }
+
+        if (!untracked.isEmpty()) {
+            answer += "untracked:\n";
+            for (Path path : untracked) {
+                answer += path.toString();
+                answer += "\n";
+            }
+        }
+        return answer;
+    }
+
+    /**
+     * Method to delete file from INDEX
+     * @param file file to delete
+     * @throws IndexIOException if there are problems during interaction with INDEX file
+     */
+    public void reset(Path file) throws IndexIOException {
+        logger.trace("reset " + file.toString() + "\n");
+        List <String> index = getIndexManager().getCurrentIndexState();
+        List <String> files = new ArrayList<>();
+        List <String> hashes = new ArrayList<>();
+        for (int i = 0; i < index.size(); i += 2) {
+            files.add(index.get(i));
+            hashes.add(index.get(i + 1));
+        }
+        int ind = index.indexOf(file.toString());
+        if (ind == -1)
+            return;
+        files.remove(ind);
+        hashes.remove(ind);
+        getIndexManager().cleanIndex();;
+        getIndexManager().updateIndex(files, hashes);
+    }
+
+
+    private List <Path> listFilesInDirectory(Path path) {
+        return FileUtils.listFiles(path.toFile(), null, true)
+                .stream()
+                .map(File::toPath)
+                .collect(Collectors.toList());
+    }
 
     private void makeDirs() throws IOException {
         Files.createDirectory(GIT_DIRECTORY);

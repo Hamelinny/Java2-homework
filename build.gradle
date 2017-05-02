@@ -25,5 +25,9 @@ task createJar(type: Jar) {
 
 dependencies {
     compile group: 'org.jetbrains', name: 'annotations', version: '13.0'
+    compile group: 'commons-io', name: 'commons-io', version: '2.0.1'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.8.1'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.8.1'
     testCompile group: 'junit', name: 'junit', version: '4.11'
+    testCompile "org.mockito:mockito-core:2.+"
 }

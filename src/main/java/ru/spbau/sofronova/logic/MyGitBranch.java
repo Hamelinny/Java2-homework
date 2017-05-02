@@ -19,6 +19,11 @@ public class MyGitBranch {
 
     private final MyGit repository;
 
+
+    /**
+     * Creates MyGitBranch from repository
+     * @param repository repository
+     */
     public MyGitBranch(@NotNull MyGit repository) {
         this.repository = repository;
     }

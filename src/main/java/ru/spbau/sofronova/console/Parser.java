@@ -5,6 +5,7 @@ import ru.spbau.sofronova.logic.MyGit;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static ru.spbau.sofronova.logic.MyGit.*;
@@ -113,9 +114,44 @@ public class Parser {
                 System.out.println(logContent);
                 return;
             }
+            if (arg[0].equals("rm")) {
+                if (arg.length == 1) {
+                    System.out.println("please specify parameters\n");
+                    return;
+                }
+                List <String> paths = new ArrayList<>();
+                Collections.addAll(paths, arg);
+                repository.rm(paths);
+                return;
+            }
+            if (arg[0].equals("reset")) {
+                if (arg.length == 1) {
+                    System.out.println("please specify parameters\n");
+                    return;
+                }
+                repository.reset(Paths.get(arg[1]));
+                return;
+            }
+            if (arg[0].equals("clean")) {
+                if (arg.length > 1) {
+                    System.out.println("too many arguments\n");
+                    return;
+                }
+                repository.clean();
+                return;
+            }
+            if (arg[0].equals("status")) {
+                if (arg.length > 1) {
+                    System.out.println("too many arguments\n");
+                    return;
+                }
+                System.out.println(repository.status());
+                return;
+            }
             System.out.println("unknown command\n");
         }
         catch (Exception e) {
+            repository.getLogger().trace("exception " + e.getMessage() + "\n");
             System.out.println(e.getMessage());
         }
 
