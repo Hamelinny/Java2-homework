@@ -85,9 +85,9 @@ public class Client {
             channel.close();
             return reader.getContent();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-
+        return new byte[0];
     }
 
     private List <String> getListOfString(byte[] content) {

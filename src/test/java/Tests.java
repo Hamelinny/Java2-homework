@@ -8,6 +8,7 @@ import ru.spbau.sofronova.client.Client;
 import ru.spbau.sofronova.server.Server;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.file.Files;
@@ -84,15 +85,19 @@ public class Tests {
 
     @Test
     public void testLargeFile() throws IOException {
-        Path file1 = folder.newFile("file1").toPath();
-        byte[] data = new byte[1000000];
-        Files.write(file1, data);
-        Server server = new Server(45000);
-        server.start();
-        Client client = new Client(server.getPort());
-        Path anotherFile = folder.newFile("check").toPath();
-        client.executeGet(file1.toAbsolutePath().toString(), anotherFile.toAbsolutePath().toString());
-        byte[] ans = Files.readAllBytes(anotherFile);
-        assertArrayEquals(data, ans);
+        try {
+            Path file1 = folder.newFile("file1").toPath();
+            byte[] data = new byte[1000000];
+            Files.write(file1, data);
+            Server server = new Server(40001);
+            server.start();
+            Client client = new Client(server.getPort());
+            Path anotherFile = folder.newFile("check").toPath();
+            client.executeGet(file1.toAbsolutePath().toString(), anotherFile.toAbsolutePath().toString());
+            byte[] ans = Files.readAllBytes(anotherFile);
+            assertArrayEquals(data, ans);
+        } catch (ConnectException e) {
+            e.printStackTrace();
+        }
     }
 }
