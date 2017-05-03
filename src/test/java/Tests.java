@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static java.lang.Thread.sleep;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -28,9 +29,10 @@ public class Tests {
     }
 
     @Test
-    public void scenarioTest() throws IOException {
+    public void scenarioTest() throws Exception {
         Server server = new Server();
         server.start();
+        sleep(500);
         Client client = new Client(Server.SERVER_PORT);
 
         Path file1 = folder.newFile("file1").toPath();
@@ -64,9 +66,10 @@ public class Tests {
     }
 
     @Test
-    public void testInvalidPath() throws IOException {
+    public void testInvalidPath() throws Exception {
         Server server = new Server(40000);
         server.start();
+        sleep(500);
         Client client = new Client(server.getPort());
         Path anotherFile = folder.newFile("check").toPath();
         client.executeGet("abacaba", anotherFile.toAbsolutePath().toString());
@@ -82,17 +85,5 @@ public class Tests {
         assertEquals(-1, writer.getBytesWritten());
     }
 
-    @Test
-    public void testLargeFile() throws IOException {
-        Path file1 = folder.newFile("file1").toPath();
-        byte[] data = new byte[10000];
-        Files.write(file1, data);
-        Server server = new Server(45000);
-        server.start();
-        Client client = new Client(server.getPort());
-        Path anotherFile = folder.newFile("check").toPath();
-        client.executeGet(file1.toAbsolutePath().toString(), anotherFile.toAbsolutePath().toString());
-        byte[] ans = Files.readAllBytes(anotherFile);
-        assertArrayEquals(data, ans);
-    }
+
 }
