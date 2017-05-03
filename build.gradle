@@ -9,7 +9,6 @@ targetCompatibility = 1.8
 repositories {
     mavenCentral()
 }
-
 task jarClientGui(type: Jar) {
     manifest {
         from file("${projectDir}/src/main/resources/client/gui/MANIFEST.MF")
