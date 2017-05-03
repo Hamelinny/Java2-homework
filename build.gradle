@@ -5,21 +5,49 @@ apply plugin: 'java'
 apply plugin: 'application'
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
 }
 
-mainClassName = "ru.spbau.sofronova.client.Console"
 
-task createJar(type: Jar) {
+task jarClientGui(type: Jar) {
     manifest {
-        attributes 'Implementation-Title': 'MyGit application',
-                'Implementation-Version': version,
-                'Main-Class': 'ru.spbau.sofronova.client.Console'
+        from file("${projectDir}/src/main/resources/client/gui/MANIFEST.MF")
     }
-    baseName = project.name + '-application'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    baseName = "client-gui"
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    with jar
+}
+
+task jarClientConsole(type: Jar) {
+    manifest {
+        from file("${projectDir}/src/main/resources/client/console/MANIFEST.MF")
+    }
+    baseName = "client-console"
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    with jar
+}
+
+task jarServer(type: Jar) {
+    manifest {
+        from file("${projectDir}/src/main/resources/server/MANIFEST.MF")
+    }
+    baseName = "server"
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
     with jar
 }
 
