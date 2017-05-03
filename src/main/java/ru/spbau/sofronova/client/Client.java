@@ -65,7 +65,7 @@ public class Client {
              DataOutputStream outputStream = new DataOutputStream(byteStream)) {
             SocketChannel channel = SocketChannel.open();
             channel.connect(new InetSocketAddress(port));
-            channel.configureBlocking(false);;
+            channel.configureBlocking(false);
             byte[] bytes;
 
             outputStream.writeInt(code);
@@ -85,9 +85,8 @@ public class Client {
             channel.close();
             return reader.getContent();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return new byte[0];
     }
 
     private List <String> getListOfString(byte[] content) {
