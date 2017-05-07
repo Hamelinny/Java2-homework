@@ -31,6 +31,7 @@ public class MyGitHead {
      */
     public void updateHead(@NotNull String currentBranch) throws HeadIOException {
         try {
+            Files.delete(repository.HEAD);
             Files.write(repository.HEAD, currentBranch.getBytes());
         }
         catch (IOException e) {

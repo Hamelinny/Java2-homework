@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
@@ -38,13 +39,20 @@ public class MyGitBranch {
      * @throws ObjectStoreException         if there are some IO problems during interaction with information about branches
      */
     public void createBranch(@NotNull String name, @NotNull String commitHash) throws GitDoesNotExistException,
-            BranchAlreadyExistsException, ObjectStoreException {
+            BranchAlreadyExistsException, ObjectStoreException, LogIOException {
         if (Files.notExists(repository.GIT_DIRECTORY))
             throw new GitDoesNotExistException("git does not exist\n");
         if (Files.exists(buildPath(repository.REFS_DIRECTORY, name)))
             throw new BranchAlreadyExistsException("branch already exists\n");
         Branch newBranch = new Branch(name, repository, commitHash);
         newBranch.storeObject();
+        try {
+            repository.getLogsManager().updateLog(name, Files.readAllLines(
+                    buildPath(repository.OBJECTS_DIRECTORY, commitHash)).get(1) + "\n");
+        } catch (IOException e) {
+            throw new LogIOException("IO exception with log during branch creation");
+        }
+
     }
 
     /**
@@ -95,7 +103,7 @@ public class MyGitBranch {
      * @throws ObjectStoreException         if there are some problems during storing branch
      */
     public void checkoutCommit(@NotNull String hash) throws GitDoesNotExistException, BranchAlreadyExistsException,
-            HeadIOException, ObjectStoreException, BranchIOException {
+            HeadIOException, ObjectStoreException, BranchIOException, LogIOException {
         createBranch(hash, hash);
         checkoutBranch(hash);
     }

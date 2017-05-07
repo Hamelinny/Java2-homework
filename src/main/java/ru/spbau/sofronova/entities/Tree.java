@@ -35,11 +35,13 @@ public class Tree extends GitObject {
     }
 
     private static byte[] getContent(@NotNull List <String> fileName, @NotNull List <String> fileHash) {
-        String allInfo = "";
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < fileName.size(); i++) {
-            allInfo += fileName.get(i) + fileHash.get(i) + '\n';
+            builder.append(fileName.get(i));
+            builder.append(fileHash.get(i));
+            builder.append('\n');
         }
-        return allInfo.getBytes();
+        return builder.toString().getBytes();
     }
 
     /**

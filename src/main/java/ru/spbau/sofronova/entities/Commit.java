@@ -6,8 +6,10 @@ import ru.spbau.sofronova.logic.MyGit;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.Date;
 import static ru.spbau.sofronova.logic.MyGitUtils.buildPath;
+import static ru.spbau.sofronova.logic.MyGitUtils.newLine;
 
 /**
  * Object which corresponds a commit. It stores commit author, message, date of commit and hash of the tree.
@@ -53,6 +55,8 @@ public class Commit extends GitObject {
     public void storeObject() throws ObjectStoreException {
         try {
             Files.write(buildPath(repository.OBJECTS_DIRECTORY, hash), treeHash.getBytes());
+            Files.write(buildPath(repository.OBJECTS_DIRECTORY, hash), newLine(), StandardOpenOption.APPEND);
+            Files.write(buildPath(repository.OBJECTS_DIRECTORY, hash), getInfo().getBytes(), StandardOpenOption.APPEND);
         } catch (IOException e) {
             throw new ObjectStoreException("cannot store commit\n");
         }

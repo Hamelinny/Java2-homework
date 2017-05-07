@@ -84,7 +84,8 @@ public class MyGitTests {
 
     @Test
     public void createAndDeleteBranchTest() throws HeadIOException, BranchAlreadyExistsException,
-            GitDoesNotExistException, ObjectStoreException, BranchIOException, BranchDeletionException {
+            GitDoesNotExistException, ObjectStoreException, BranchIOException, BranchDeletionException,
+            LogIOException {
 
         rep.branch("another");
         Path pathToBranchRef = buildPath(rep.REFS_DIRECTORY, "another");
@@ -117,7 +118,7 @@ public class MyGitTests {
 
     @Test
     public void checkoutCommitHash() throws BranchIOException, HeadIOException, GitDoesNotExistException,
-            BranchAlreadyExistsException, ObjectStoreException {
+            BranchAlreadyExistsException, ObjectStoreException, LogIOException {
         String commitHash = head.getCurrentCommit();
         rep.checkout(commitHash);
         assertTrue(Files.exists(buildPath(rep.REFS_DIRECTORY, commitHash)));
@@ -147,8 +148,8 @@ public class MyGitTests {
     @Test
     public void testLog() throws HeadIOException, GitDoesNotExistException, LogIOException {
         String initMessage = new String(rep.log());
-        String[] tokens = initMessage.split(" ");
-        String user = tokens[0];
+        String[] tokens = initMessage.split(" |\\n");
+        String user = tokens[1];
         assertEquals(System.getProperty("user.name"), user);
     }
 
@@ -205,14 +206,14 @@ public class MyGitTests {
 
     @Test(expected = GitDoesNotExistException.class)
     public void testGitDoesNotExist() throws HeadIOException, BranchAlreadyExistsException,
-            GitDoesNotExistException, BranchIOException, ObjectStoreException {
+            GitDoesNotExistException, BranchIOException, ObjectStoreException, LogIOException {
         deleteDirectory(new File(rep.GIT_DIRECTORY.toString()));
         rep.branch("branch");
     }
 
     @Test(expected = BranchAlreadyExistsException.class)
     public void testBranchAlreadyExist() throws HeadIOException, BranchAlreadyExistsException,
-            GitDoesNotExistException, BranchIOException, ObjectStoreException {
+            GitDoesNotExistException, BranchIOException, ObjectStoreException, LogIOException {
         rep.branch("master");
     }
 

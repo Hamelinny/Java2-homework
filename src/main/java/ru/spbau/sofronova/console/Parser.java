@@ -95,11 +95,11 @@ public class Parser {
             }
             if (arg[0].equals("merge")) {
                 if (arg.length == 1) {
-                    System.out.println("please enter a branch name\n");
+                    System.out.println("please enter a branch name/commit hash\n");
                     return;
                 }
                 if (arg.length > 2) {
-                    System.out.println("cannot parse parameters after branch name\n");
+                    System.out.println("cannot parse parameters after branch name/commit hash\n");
                     return;
                 }
                 repository.merge(arg[1]);

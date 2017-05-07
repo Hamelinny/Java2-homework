@@ -5,6 +5,7 @@ import ru.spbau.sofronova.exceptions.ObjectStoreException;
 import ru.spbau.sofronova.exceptions.ObjectIOException;
 import ru.spbau.sofronova.logic.MyGit;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,8 +20,8 @@ public class Blob extends GitObject {
     @NotNull
     private byte[] content;
 
-    private Blob(@NotNull byte[] content, @NotNull MyGit repository) {
-        super(content, repository);
+    private Blob(@NotNull byte[] nameAndContent, @NotNull byte[] content, @NotNull MyGit repository) {
+        super(nameAndContent, repository);
         this.content = content;
     }
 
@@ -46,7 +47,11 @@ public class Blob extends GitObject {
      */
     public static Blob getBlob(@NotNull Path file, @NotNull MyGit repository) throws ObjectIOException {
         try {
-            return new Blob(Files.readAllBytes(file), repository);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            outputStream.write(file.toString().getBytes());
+            outputStream.write(Files.readAllBytes(file));
+
+            return new Blob(outputStream.toByteArray(), Files.readAllBytes(file), repository);
         } catch (IOException e) {
             throw new ObjectIOException("cannot get blob from file\n");
         }

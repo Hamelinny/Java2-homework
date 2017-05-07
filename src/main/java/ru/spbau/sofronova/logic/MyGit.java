@@ -11,6 +11,7 @@ import ru.spbau.sofronova.entities.Tree;
 import ru.spbau.sofronova.exceptions.*;
 import ru.spbau.sofronova.logger.MyGitLogBuilder;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -66,7 +67,7 @@ public class MyGit {
      * @param folder folder that will contain repository
      */
     public MyGit(@NotNull String folder) {
-        GIT_DIRECTORY = buildPath(folder, ".git");
+        GIT_DIRECTORY = buildPath(folder, ".MyGit");
         INDEX = buildPath(GIT_DIRECTORY, "index");
         OBJECTS_DIRECTORY = buildPath(GIT_DIRECTORY, "objects");
         REFS_DIRECTORY = buildPath(GIT_DIRECTORY, "refs");
@@ -142,7 +143,6 @@ public class MyGit {
             makeDirs();
             Commit initial = commit("initial commit");
             getBranchManager().createBranch("master", initial.getHash());
-            getLogsManager().updateLog("master", initial.getInfo());
             getHeadManager().updateHead("master");
         } catch (IOException e) {
             throw new InitIOException("IO problem during git initialization\n");
@@ -202,7 +202,7 @@ public class MyGit {
                 collect(Collectors.toList())) + "\n");
         if (Files.notExists(GIT_DIRECTORY))
             throw new GitDoesNotExistException("git does not exist\n");
-        getIndexManager().updateIndex(files);
+        getIndexManager().updateIndex(files.stream().filter(Files::exists).collect(Collectors.toList()));
     }
 
     /**
@@ -214,7 +214,8 @@ public class MyGit {
      * @throws BranchIOException if there are problems during interaction with info about branches
      */
     public void checkout(@NotNull String toCheckout) throws GitDoesNotExistException,
-            BranchAlreadyExistsException, HeadIOException, BranchIOException, ObjectStoreException {
+            BranchAlreadyExistsException, HeadIOException, BranchIOException, ObjectStoreException,
+            LogIOException {
         logger.trace("checkout " + toCheckout + "\n");
         if (isHash(toCheckout))
             getBranchManager().checkoutCommit(toCheckout);
@@ -231,7 +232,8 @@ public class MyGit {
      * @throws BranchAlreadyExistsException if branch we want to make already exists
      */
     public void branch(@NotNull String name) throws BranchIOException, HeadIOException,
-            GitDoesNotExistException, BranchAlreadyExistsException, ObjectStoreException {
+            GitDoesNotExistException, BranchAlreadyExistsException, ObjectStoreException,
+            LogIOException {
         logger.trace("branch " + name + "\n");
         getBranchManager().createBranch(name, getHeadManager().getCurrentCommit());
     }
@@ -300,7 +302,11 @@ public class MyGit {
         if (Files.notExists(GIT_DIRECTORY))
             throw new GitDoesNotExistException("git does not exist\n");
         try {
-            return Files.readAllBytes(buildPath(LOGS_DIRECTORY, getHeadManager().getCurrentBranch()));
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+            outputStream.write(getHeadManager().getCurrentBranch().getBytes());
+            outputStream.write(newLine());
+            outputStream.write(Files.readAllBytes(buildPath(LOGS_DIRECTORY, getHeadManager().getCurrentBranch())));
+            return outputStream.toByteArray();
         } catch (IOException e) {
             throw new LogIOException("IO exception with log\n");
         }
