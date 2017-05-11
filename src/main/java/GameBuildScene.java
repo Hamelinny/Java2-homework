@@ -65,6 +65,8 @@ public class GameBuildScene {
     }
 
     private void handle(int i, int j) {
+        if (numbers.size() >= 4)
+            return;
         Label label = new Label(Integer.toString(field[i][j]));
         label.setFont(new Font(15.0));
         buttons.getItems().get(i).getItems().set(j, label);
