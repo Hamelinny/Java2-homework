@@ -106,8 +106,12 @@ public class GameBuildScene {
 
 
     private boolean checkIfMatch() {
-        return ((Label)buttons.getItems().get(numbers.get(0)).getItems().get(numbers.get(1))).getText().equals(
-                ((Label)buttons.getItems().get(numbers.get(2)).getItems().get(numbers.get(3))).getText()); //sorry
+        int i1 = numbers.get(0);
+        int j1 = numbers.get(1);
+        int i2 = numbers.get(2);
+        int j2 = numbers.get(3);
+        return ((Label)buttons.getItems().get(i1).getItems().get(j1)).getText().equals(
+                ((Label)buttons.getItems().get(i2).getItems().get(j2)).getText()); //still sorry
     }
 
 
