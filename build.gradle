@@ -1,0 +1,26 @@
+group 'MyJUnit'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+task makeJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'MyJUnit',
+                'Implementation-Version': version,
+                'Main-Class': 'Main'
+    }
+    baseName = project.name + '-application'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile group: 'org.jetbrains', name: 'annotations', version: '13.0'
+}
