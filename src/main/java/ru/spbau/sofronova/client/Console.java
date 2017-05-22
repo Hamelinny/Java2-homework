@@ -15,6 +15,8 @@ public class Console {
     public static void main(@NotNull String[] args) {
         try (Scanner scanner = new Scanner(System.in)) {
             parse(scanner);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 }

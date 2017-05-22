@@ -1,6 +1,7 @@
 package ru.spbau.sofronova.server;
 
 import org.jetbrains.annotations.NotNull;
+import ru.spbau.sofronova.exceptions.FileInteractionIOException;
 
 import java.nio.file.Path;
 
@@ -10,6 +11,7 @@ public abstract class Performer {
      * An abstract method to perform a command.
      * @param path file or directory
      * @return result in byte array
+     * @throws FileInteractionIOException IOException during interaction with file
      */
-    public abstract byte[] perform(@NotNull Path path);
+    public abstract byte[] perform(@NotNull Path path) throws FileInteractionIOException;
 }

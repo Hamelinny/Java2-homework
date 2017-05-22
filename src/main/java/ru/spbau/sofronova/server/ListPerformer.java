@@ -1,6 +1,7 @@
 package ru.spbau.sofronova.server;
 
 import org.jetbrains.annotations.NotNull;
+import ru.spbau.sofronova.exceptions.FileInteractionIOException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -17,9 +18,10 @@ public class ListPerformer extends Performer {
      * Method to perform a "list" command.
      * @param path directory to get list of files
      * @return list of files in byte array
+     * @throws FileInteractionIOException IOException during interaction with file
      */
     @Override
-    public byte[] perform(@NotNull Path path) {
+    public byte[] perform(@NotNull Path path) throws FileInteractionIOException {
         if (!Files.isDirectory(path) || !Files.exists(path)) {
             return null;
         }
@@ -33,7 +35,7 @@ public class ListPerformer extends Performer {
             outputStream.flush();
             return byteStream.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new FileInteractionIOException(e);
         }
     }
 }

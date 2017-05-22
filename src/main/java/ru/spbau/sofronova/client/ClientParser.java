@@ -1,6 +1,9 @@
 package ru.spbau.sofronova.client;
 
 import org.jetbrains.annotations.NotNull;
+import ru.spbau.sofronova.exceptions.ConvertDataIOException;
+import ru.spbau.sofronova.exceptions.GetExecutionIOException;
+import ru.spbau.sofronova.exceptions.SendDataException;
 import ru.spbau.sofronova.server.Server;
 
 import java.util.Iterator;
@@ -10,7 +13,8 @@ import java.util.List;
 public class ClientParser {
 
 
-    static void parse(@NotNull Iterator <String> iter) {
+    static void parse(@NotNull Iterator <String> iter) throws SendDataException, ConvertDataIOException,
+            GetExecutionIOException {
         Client client = new Client(Server.SERVER_PORT);
         while (true) {
             String query = iter.next();

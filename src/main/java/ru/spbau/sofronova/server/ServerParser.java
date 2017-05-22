@@ -9,6 +9,7 @@ public class ServerParser {
 
     static void parse(@NotNull Iterator<String> iter) {
         Server server = new Server();
+        System.out.println("Enter \"start\" to run server or \"stop\" to stop it\n");
         while (true) {
             String query = iter.next();
             if (query.equals("start")) {

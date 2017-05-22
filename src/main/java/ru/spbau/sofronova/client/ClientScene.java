@@ -17,6 +17,7 @@ import ru.spbau.sofronova.server.Server;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
@@ -84,7 +85,12 @@ public class ClientScene {
             }
             if (event.getClickCount() == 1) {
                 String selectedItem = fileList.getSelectionModel().getSelectedItem();
-                pathTextField.setText(Paths.get(lastDir.getText(), selectedItem).toString());
+                Path pathToList = null;
+                if (selectedItem.equals(".."))
+                    pathToList = Paths.get(lastDir.getText()).getParent();
+                else
+                    pathToList = Paths.get(lastDir.getText(), selectedItem);
+                pathTextField.setText(pathToList.toString());
                 return;
             }
             if (event.getClickCount() == 2) {
@@ -97,7 +103,7 @@ public class ClientScene {
                 if (Files.notExists(Paths.get(pathToSave.getText())))
                     executeGet(pathTextField.getText(), pathToSave.getText());
                 else
-                    showMessage(ERROR, "Fail: ", "file where you want to store content already exists (or it's directory)");
+                    showMessage(ERROR, "Fail: ", "file already exists (or it's directory)");
             }
             else {
                 chooseFolder(pathToSave, stage);
@@ -167,6 +173,7 @@ public class ClientScene {
             }
             lastDir.setText(pathFrom);
             fileList.getItems().clear();
+            fileList.getItems().add("..");
             for (String file : paths) {
                 fileList.getItems().add(file);
             }

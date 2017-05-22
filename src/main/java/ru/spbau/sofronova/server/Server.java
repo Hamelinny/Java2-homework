@@ -2,6 +2,8 @@ package ru.spbau.sofronova.server;
 
 import ru.spbau.sofronova.Reader;
 import ru.spbau.sofronova.Writer;
+import ru.spbau.sofronova.exceptions.FileInteractionIOException;
+import ru.spbau.sofronova.exceptions.ServerProcessIOException;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -20,9 +22,10 @@ public class Server {
 
     /**Default server port.*/
     public static final int SERVER_PORT = 50000;
-
-    private final static int LIST_CODE = 1;
-    private final static int GET_CODE = 2;
+    /**Code for list command.*/
+    public final static int LIST_CODE = 1;
+    /**Code for get command.*/
+    public final static int GET_CODE = 2;
     private List<Query> toProcess;
     private volatile boolean isStopped;
     private Selector selector;
@@ -70,8 +73,8 @@ public class Server {
                     if (isStopped)
                         break;
                 }
-            } catch (IOException e) {
-
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
                 throw new RuntimeException(e);
             }
 
@@ -83,7 +86,7 @@ public class Server {
         isStopped = true;
     }
 
-    private void process() {
+    private void process() throws ServerProcessIOException, FileInteractionIOException {
         Set<SelectionKey> selected = selector.selectedKeys();
         Iterator<SelectionKey> iter = selected.iterator();
         while (iter.hasNext()) {
@@ -95,12 +98,12 @@ public class Server {
                     client = serverSocketChannel.accept();
                     client.configureBlocking(false);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new ServerProcessIOException(e);
                 }
                 try {
                     client.register(selector, SelectionKey.OP_READ, new Reader((ByteChannel)client));
                 } catch (ClosedChannelException e) {
-                    throw new RuntimeException(e);
+                    throw new ServerProcessIOException(e);
                 }
             } else if (key.isReadable()) {
                 try {
@@ -112,7 +115,7 @@ public class Server {
                         toProcess.add(new Query(key, content));
                     }
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new ServerProcessIOException(e);
                 }
                 
             } else if (key.isWritable()) {
@@ -123,7 +126,7 @@ public class Server {
                         key.channel().close();
                     }
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new ServerProcessIOException(e);
                 }
 
             }
@@ -132,7 +135,7 @@ public class Server {
         processQueries();
     }
 
-    private void processQueries() {
+    private void processQueries() throws FileInteractionIOException {
         for (Query query : toProcess) {
             byte[] response;
             try (ByteArrayInputStream byteStream = new ByteArrayInputStream(query.getContent());
