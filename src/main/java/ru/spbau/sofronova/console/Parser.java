@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ru.spbau.sofronova.logic.MyGit.*;
 
@@ -40,7 +41,7 @@ public class Parser {
                 }
                 List<Path> files = new ArrayList<>();
                 for (int i = 1; i < arg.length; i++) {
-                    files.add(Paths.get(arg[i]));
+                    files.add(Paths.get(arg[i]).toAbsolutePath());
                 }
                 repository.add(files);
                 return;
@@ -121,6 +122,7 @@ public class Parser {
                 }
                 List <String> paths = new ArrayList<>();
                 Collections.addAll(paths, arg);
+                paths = paths.stream().map(e -> Paths.get(e).toAbsolutePath().toString()).collect(Collectors.toList());
                 repository.rm(paths);
                 return;
             }
@@ -129,7 +131,7 @@ public class Parser {
                     System.out.println("please specify parameters\n");
                     return;
                 }
-                repository.reset(Paths.get(arg[1]));
+                repository.reset(Paths.get(arg[1]).toAbsolutePath());
                 return;
             }
             if (arg[0].equals("clean")) {
