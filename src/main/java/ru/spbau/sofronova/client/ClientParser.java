@@ -13,29 +13,41 @@ import java.util.List;
 public class ClientParser {
 
 
-    static void parse(@NotNull Iterator <String> iter) throws SendDataException, ConvertDataIOException,
-            GetExecutionIOException {
+    static void parse(@NotNull Iterator <String> iter) {
         Client client = new Client(Server.SERVER_PORT);
+        System.out.println("Enter \"list <directory>\" or \"get <path-to-download> <path-to-save>\"");
         while (true) {
-            String query = iter.next();
-            if (query.equals("list")) {
-                String path = iter.next();
-                List<String> answer = client.executeList(path);
-                for (String file : answer) {
-                    System.out.println(file);
+            try {
+                String query = iter.next();
+                if (query.equals("list")) {
+                    String path = iter.next();
+                    List<String> answer = client.executeList(path);
+                    if (answer == null)
+                        System.out.println("not a directory or doesn't exist");
+                    else {
+                        for (String file : answer) {
+                            System.out.println(file);
+                        }
+                    }
+                    System.out.println("\n\n");
+                    System.out.println("list executed\n");
+                    continue;
                 }
-                continue;
+                if (query.equals("get")) {
+                    String path = iter.next();
+                    String to = iter.next();
+                    client.executeGet(path, to);
+                    System.out.println("get executed\n");
+                    continue;
+                }
+                if (query.equals("exit")) {
+                    break;
+                }
+                System.out.println("unknown command");
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
             }
-            if (query.equals("get")) {
-                String path = iter.next();
-                String to = iter.next();
-                client.executeGet(path, to);
-                continue;
-            }
-            if (query.equals("exit")) {
-                break;
-            }
-            System.out.println("unknown command");
+
         }
     }
 }

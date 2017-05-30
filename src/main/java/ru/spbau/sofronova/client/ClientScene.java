@@ -19,6 +19,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -90,6 +91,8 @@ public class ClientScene {
                     pathToList = Paths.get(lastDir.getText()).getParent();
                 else
                     pathToList = Paths.get(lastDir.getText(), selectedItem);
+                if (pathToList == null)
+                    pathToList = Paths.get(lastDir.getText());
                 pathTextField.setText(pathToList.toString());
                 return;
             }
@@ -167,8 +170,8 @@ public class ClientScene {
         Client client = new Client(Server.SERVER_PORT);
         try {
             List<String> paths = client.executeList(pathFrom);
-            if (paths == null) {
-                showMessage(ERROR, "Fail: ", "Error response");
+            if (paths == null || paths.equals(new ArrayList<>())) {
+                showMessage(ERROR, "Fail: ", "Not a directory");
                 return;
             }
             lastDir.setText(pathFrom);

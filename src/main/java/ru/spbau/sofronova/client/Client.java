@@ -40,6 +40,8 @@ public class Client {
      */
     public List<String> executeList(String path) throws SendDataException, ConvertDataIOException {
         byte[] content = sendAndReceive(Server.LIST_CODE, path);
+        if (content == null || Arrays.equals(content, new byte[0]))
+            return null;
         return getListOfString(content);
     }
 
@@ -98,10 +100,6 @@ public class Client {
 
     private List <String> getListOfString(byte[] content) throws ConvertDataIOException {
         List <String> newContent = new ArrayList<>();
-        if (content == null) {
-            newContent.add(Integer.toString(0));
-            return newContent;
-        }
         try (ByteArrayInputStream byteStream = new ByteArrayInputStream(content);
              DataInputStream inputStream = new DataInputStream(byteStream)) {
             int size = inputStream.readInt();
