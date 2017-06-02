@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
 
@@ -47,11 +48,13 @@ public class Blob extends GitObject {
      */
     public static Blob getBlob(@NotNull Path file, @NotNull MyGit repository) throws ObjectIOException {
         try {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            outputStream.write(file.toString().getBytes());
-            outputStream.write(Files.readAllBytes(file));
-
-            return new Blob(outputStream.toByteArray(), Files.readAllBytes(file), repository);
+            if (Files.exists(file)) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                outputStream.write(file.toString().getBytes());
+                outputStream.write(Files.readAllBytes(file));
+                return new Blob(outputStream.toByteArray(), Files.readAllBytes(file), repository);
+            }
+            else return new Blob(new byte[0], new byte[0], repository);
         } catch (IOException e) {
             throw new ObjectIOException("cannot get blob from file\n");
         }

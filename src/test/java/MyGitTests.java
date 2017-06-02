@@ -118,7 +118,8 @@ public class MyGitTests {
 
     @Test
     public void checkoutCommitHash() throws BranchIOException, HeadIOException, GitDoesNotExistException,
-            BranchAlreadyExistsException, ObjectStoreException, LogIOException {
+            BranchAlreadyExistsException, ObjectStoreException, LogIOException,
+            IndexIOException, ObjectIOException {
         String commitHash = head.getCurrentCommit();
         rep.checkout(commitHash);
         assertTrue(Files.exists(buildPath(rep.REFS_DIRECTORY, commitHash)));
@@ -218,7 +219,7 @@ public class MyGitTests {
     }
 
     @Test
-    public void cleanTest() throws IndexIOException, IOException {
+    public void cleanTest() throws IndexIOException, IOException, ObjectIOException {
         Files.createFile(buildPath(rep.GIT_DIRECTORY.getParent(), "hello"));
         rep.clean();
         assertTrue(Files.notExists(buildPath(rep.GIT_DIRECTORY.getParent(), "hello")));
@@ -226,7 +227,7 @@ public class MyGitTests {
 
     @Test
     public void statusTest() throws IOException, IndexIOException, ObjectIOException,
-            GitDoesNotExistException, ObjectStoreException {
+            GitDoesNotExistException, ObjectStoreException, BranchIOException, HeadIOException {
 
         List <Path> file = new ArrayList<>();
         file.add(buildPath(rep.GIT_DIRECTORY.getParent(), "hello"));

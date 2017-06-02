@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
 
@@ -79,7 +81,7 @@ public class MyGitBranch {
      * @throws GitDoesNotExistException if git does not exist
      */
     public void checkoutBranch(@NotNull String branch) throws BranchIOException, HeadIOException,
-            GitDoesNotExistException {
+            GitDoesNotExistException, IndexIOException, ObjectIOException, ObjectStoreException {
         try {
             MyGitHead headUpdater = new MyGitHead(repository);
             String commitHash = headUpdater.getCurrentCommit();
@@ -103,32 +105,37 @@ public class MyGitBranch {
      * @throws ObjectStoreException         if there are some problems during storing branch
      */
     public void checkoutCommit(@NotNull String hash) throws GitDoesNotExistException, BranchAlreadyExistsException,
-            HeadIOException, ObjectStoreException, BranchIOException, LogIOException {
+            HeadIOException, ObjectStoreException, BranchIOException, LogIOException, IndexIOException, ObjectIOException {
         createBranch(hash, hash);
         checkoutBranch(hash);
     }
 
-    private void addFilesFromCommit(@NotNull String commitHash) throws BranchIOException {
+    private void addFilesFromCommit(@NotNull String commitHash) throws BranchIOException,
+            ObjectStoreException, IndexIOException, ObjectIOException {
         try {
             String hashTree = Files.lines(buildPath(repository.OBJECTS_DIRECTORY, commitHash)).findFirst().get();
             List<String> filesToRestore = Files.readAllLines(buildPath(repository.OBJECTS_DIRECTORY, hashTree));
+            List <Path> toIndex = new ArrayList<>();
             for (int i = 0; i < filesToRestore.size(); i += 2) {
                 Path blobPath = buildPath(repository.OBJECTS_DIRECTORY, filesToRestore.get(i + 1));
                 byte[] blobContent = Files.readAllBytes(blobPath);
                 Files.write(Paths.get(filesToRestore.get(i)), blobContent);
+                toIndex.add(Paths.get(filesToRestore.get(i)));
             }
+            repository.getIndexManager().updateIndex(toIndex);
         } catch (IOException e) {
             throw new BranchIOException("cannot restore files from commit\n");
         }
     }
 
-    private void deleteFilesFromCommit(@NotNull String commitHash) throws BranchIOException {
+    private void deleteFilesFromCommit(@NotNull String commitHash) throws BranchIOException, IndexIOException {
         try {
             String hashTree = Files.lines(buildPath(repository.OBJECTS_DIRECTORY, commitHash)).findFirst().get();
             List<String> filesToDelete = Files.readAllLines(buildPath(repository.OBJECTS_DIRECTORY, hashTree));
             for (int i = 0; i < filesToDelete.size(); i += 2) {
                 Files.delete(Paths.get(filesToDelete.get(i)));
             }
+            repository.getIndexManager().cleanIndex();
         } catch (IOException e) {
             throw new BranchIOException("cannot delete files from commit\n");
         }

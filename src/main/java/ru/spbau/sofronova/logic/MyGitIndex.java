@@ -54,11 +54,25 @@ public class MyGitIndex {
             ObjectStoreException {
         List <String> indexContent = getCurrentIndexState();
         List <String> alreadyHave = new ArrayList<>();
+        List <String> hashesOld = new ArrayList<>();
         for (int i = 0; i < indexContent.size(); i += 2) {
             alreadyHave.add(indexContent.get(i));
+            hashesOld.add(indexContent.get(i + 1));
         }
         List <String> toAdd = files.stream().map(Path::toString).collect(Collectors.toList());
-        toAdd.removeAll(alreadyHave);
+        alreadyHave.removeAll(toAdd);
+        cleanIndex();
+        for (int i = 0; i < alreadyHave.size(); i++) {
+            try {
+                Files.write(repository.INDEX, alreadyHave.get(i).getBytes(), StandardOpenOption.APPEND);
+                Files.write(repository.INDEX, newLine(), StandardOpenOption.APPEND);
+                Files.write(repository.INDEX, hashesOld.get(i).getBytes(),
+                        StandardOpenOption.APPEND);
+                Files.write(repository.INDEX, newLine(), StandardOpenOption.APPEND);
+            } catch (IOException e) {
+                throw new IndexIOException("cannot update INDEX\n");
+            }
+        }
         for (String line : toAdd) {
             try {
                 Files.write(repository.INDEX, line.getBytes(), StandardOpenOption.APPEND);

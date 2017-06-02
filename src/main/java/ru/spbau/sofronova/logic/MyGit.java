@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.spbau.sofronova.entities.Blob.getBlob;
 import static ru.spbau.sofronova.logic.MyGitUtils.*;
 
 /**
@@ -185,7 +184,6 @@ public class MyGit {
             currentBranch.storeObject();
             getLogsManager().updateLog(currentBranchName, commit.getInfo());
         }
-        getIndexManager().cleanIndex();
         return commit;
     }
 
@@ -215,7 +213,7 @@ public class MyGit {
      */
     public void checkout(@NotNull String toCheckout) throws GitDoesNotExistException,
             BranchAlreadyExistsException, HeadIOException, BranchIOException, ObjectStoreException,
-            LogIOException {
+            LogIOException, IndexIOException, ObjectIOException {
         logger.trace("checkout " + toCheckout + "\n");
         if (isHash(toCheckout))
             getBranchManager().checkoutCommit(toCheckout);
@@ -333,7 +331,7 @@ public class MyGit {
      * Method to remove untracked files from disk.
      * @throws IndexIOException if there are problems during interaction with INDEX file
      */
-    public void clean() throws IndexIOException {
+    public void clean() throws IndexIOException, ObjectIOException {
         logger.trace("clean\n");
         List<Path> paths = listFilesInDirectory(GIT_DIRECTORY.getParent());
         List<Path> pathsNotToDelete = listFilesInDirectory(GIT_DIRECTORY);
@@ -345,6 +343,23 @@ public class MyGit {
             pathsFromIndex.add(Paths.get(fromIndex.get(i)));
         }
         paths.removeAll(pathsFromIndex);
+        List<String> filesFromCommit = null;
+        try {
+            String hashTree = Files.lines(buildPath(OBJECTS_DIRECTORY, headManager.getCurrentCommit())).findFirst().get();
+            filesFromCommit = Files.readAllLines(buildPath(OBJECTS_DIRECTORY, hashTree));
+        } catch (Exception e) {
+            throw new ObjectIOException("cannot get files from commit");
+        }
+        for (int i = 0; i < filesFromCommit.size(); i += 2) {
+            Path path = Paths.get(filesFromCommit.get(i));
+            String hash = filesFromCommit.get(i + 1);
+            if (Files.notExists(path)) {
+                paths.remove(path);
+                continue;
+            }
+            if (!pathsFromIndex.contains(path) && Blob.getBlob(path, this).getHash().equals(hash))
+                paths.remove(path);
+        }
         for (Path path: paths) {
             deleteDirectory(new File(path.toString()));
         }
@@ -356,7 +371,8 @@ public class MyGit {
      * @throws IndexIOException if there are problems during interaction with INDEX file
      * @throws ObjectIOException if there are problems with objects IO
      */
-    public String status() throws IndexIOException, ObjectIOException {
+    public String status() throws IndexIOException, ObjectIOException, BranchIOException, HeadIOException,
+            GitDoesNotExistException {
         logger.trace("status\n");
         String answer = "";
         List <Path> modified = new ArrayList<>();
@@ -369,26 +385,53 @@ public class MyGit {
         untracked.removeAll(pathsNotToShow);
 
         List <String> fromIndex = getIndexManager().getCurrentIndexState();
-        List <Path> pathsFromIndex = new ArrayList<>();
+        List <Path> pathsToExamine = new ArrayList<>();
         List <String> hashes = new ArrayList<>();
         for (int i = 0; i < fromIndex.size(); i += 2) {
-            pathsFromIndex.add(Paths.get(fromIndex.get(i)));
+            pathsToExamine.add(Paths.get(fromIndex.get(i)));
             hashes.add(fromIndex.get(i + 1));
         }
-        untracked.removeAll(pathsFromIndex);
-
-        for (int i = 0; i < pathsFromIndex.size(); i++) {
-            Path path = pathsFromIndex.get(i);
+        untracked.removeAll(pathsToExamine);
+        List<String> filesFromCommit = null;
+        try {
+            String hashTree = Files.lines(buildPath(OBJECTS_DIRECTORY, headManager.getCurrentCommit())).findFirst().get();
+            filesFromCommit = Files.readAllLines(buildPath(OBJECTS_DIRECTORY, hashTree));
+        } catch (Exception e) {
+            throw new ObjectIOException("cannot get files from commit");
+        }
+        List <Path> pathsFromCommit = new ArrayList<>();
+        List <String> hashesFromCommit = new ArrayList<>();
+        for (int i = 0; i < filesFromCommit.size(); i += 2) {
+            Path path = Paths.get(filesFromCommit.get(i));
+            String hash = filesFromCommit.get(i + 1);
+            pathsFromCommit.add(path);
+            hashesFromCommit.add(hash);
+            if (Files.notExists(path)) {
+                untracked.remove(path);
+                continue;
+            }
+            if (pathsToExamine.contains(path))
+                untracked.remove(path);
+            if (!pathsToExamine.contains(path) && Blob.getBlob(path, this).getHash().equals(hash))
+                untracked.remove(path);
+        }
+        for (int i = 0; i < pathsToExamine.size(); i++) {
+            Path path = pathsToExamine.get(i);
             String hash = hashes.get(i);
             if (Files.notExists(path)) {
                 deleted.add(path);
                 continue;
             }
-            if (Blob.getBlob(path, this).getHash().equals(hash))
+            int ind = pathsFromCommit.indexOf(path);
+            if (Blob.getBlob(path, this).getHash().equals(hash) && (ind == -1 || !hashesFromCommit.get(ind).equals(hash)))
                 staged.add(path);
-            else
+            else if (!Blob.getBlob(path, this).getHash().equals(hash))
                 modified.add(path);
         }
+        staged = distinct(staged);
+        modified = distinct(modified);
+        deleted = distinct(deleted);
+        untracked = distinct(untracked);
 
         if (!staged.isEmpty()) {
             answer += "staged:\n";
@@ -421,6 +464,9 @@ public class MyGit {
                 answer += "\n";
             }
         }
+
+        answer += "current commit: " + getHeadManager().getCurrentCommit() + "\n";
+
         return answer;
     }
 
@@ -463,5 +509,10 @@ public class MyGit {
         Files.createFile(INDEX);
         Files.createFile(HEAD);
     }
+
+    private List<Path> distinct(List <Path> list) {
+        return list.stream().distinct().collect(Collectors.toList());
+    }
+
 
 }

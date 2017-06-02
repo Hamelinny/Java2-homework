@@ -150,6 +150,13 @@ public class Parser {
                 System.out.println(repository.status());
                 return;
             }
+            if (arg[0].equals("help")) {
+                System.out.println("Available commands: \n init \n add <file> \n commit <message> \n" +
+                        " checkout <branch name/commit hash> \n branch [-OPTION] <branch name> \n" +
+                        " merge <branch name> \n log \n rm <list of files> \n reset <name of file> \n" +
+                        " clean \n status \n");
+                return;
+            }
             System.out.println("unknown command\n");
         }
         catch (Exception e) {
