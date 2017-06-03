@@ -43,7 +43,7 @@ public class MyGitBranch {
     public void createBranch(@NotNull String name, @NotNull String commitHash) throws GitDoesNotExistException,
             BranchAlreadyExistsException, ObjectStoreException, LogIOException {
         if (Files.notExists(repository.GIT_DIRECTORY))
-            throw new GitDoesNotExistException("git does not exist\n");
+            throw new GitDoesNotExistException("git does not exist, please perform \"init\"\n");
         if (Files.exists(buildPath(repository.REFS_DIRECTORY, name)))
             throw new BranchAlreadyExistsException("branch already exists\n");
         Branch newBranch = new Branch(name, repository, commitHash);
