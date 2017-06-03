@@ -1,0 +1,68 @@
+package ru.spbau.sofronova.entities;
+
+import org.jetbrains.annotations.NotNull;
+import ru.spbau.sofronova.exceptions.ObjectStoreException;
+import ru.spbau.sofronova.logic.MyGit;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.List;
+
+import static ru.spbau.sofronova.logic.MyGitUtils.*;
+
+/**
+ * A class which for now is not a tree at all, but it contains names and hashes of files from commit.
+ */
+public class Tree extends GitObject {
+
+    @NotNull
+    private List <String> fileName;
+    @NotNull
+    private List <String> fileHash;
+
+    /**
+     * Makes a tree from list of names and list of hashes.
+     * @param fileName names of files.
+     * @param fileHash hashes of files.
+     * @param repository repository entity
+     */
+    public Tree(@NotNull List <String> fileName, @NotNull List <String> fileHash, @NotNull MyGit repository) {
+        super(getContent(fileName, fileHash), repository);
+        this.fileHash = fileHash;
+        this.fileName = fileName;
+    }
+
+    private static byte[] getContent(@NotNull List <String> fileName, @NotNull List <String> fileHash) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < fileName.size(); i++) {
+            builder.append(fileName.get(i));
+            builder.append(fileHash.get(i));
+            builder.append('\n');
+        }
+        return builder.toString().getBytes();
+    }
+
+    /**
+     * Method to create a file in repository which name is tree hash and which content is names and hashes of files in commit.
+     * @throws ObjectStoreException if there are some IO problems during add.
+     */
+    @Override
+    public void storeObject() throws ObjectStoreException {
+        try {
+            Path pathToTree = buildPath(repository.OBJECTS_DIRECTORY, hash);
+            Files.deleteIfExists(pathToTree);
+            Files.createFile(pathToTree);
+            for (int i = 0; i < fileName.size(); i++) {
+                Files.write(pathToTree, fileName.get(i).getBytes(), StandardOpenOption.APPEND);
+                Files.write(pathToTree, newLine(), StandardOpenOption.APPEND);
+                Files.write(pathToTree, fileHash.get(i).getBytes(), StandardOpenOption.APPEND);
+                Files.write(pathToTree, newLine(), StandardOpenOption.APPEND);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ObjectStoreException("cannot store tree\n");
+        }
+    }
+}
