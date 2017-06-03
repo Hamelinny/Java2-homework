@@ -44,7 +44,7 @@ public class Commit extends GitObject {
      * @return String with the information.
      */
     public String getInfo() {
-        return author + ' ' + message + ' ' + date.toString() + '\n';
+        return author + ' ' + getHash() + ' ' + message + ' ' + date.toString() + '\n';
     }
 
     /**

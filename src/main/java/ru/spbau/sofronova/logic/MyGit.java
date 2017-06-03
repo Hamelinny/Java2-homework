@@ -165,7 +165,7 @@ public class MyGit {
             LogIOException, HeadIOException, BranchIOException, ObjectStoreException, ObjectIOException {
         logger.trace("commit with \"" + message + "\" message\n");
         if (Files.notExists(GIT_DIRECTORY))
-            throw new GitDoesNotExistException("git does not exist\n");
+            throw new GitDoesNotExistException("git does not exist, please perform \"init\" command\n");
 
         List<String> indexContent = getIndexManager().getCurrentIndexState();
         List<String> files = new ArrayList<>();
@@ -199,7 +199,7 @@ public class MyGit {
                 map(Path::toString).
                 collect(Collectors.toList())) + "\n");
         if (Files.notExists(GIT_DIRECTORY))
-            throw new GitDoesNotExistException("git does not exist\n");
+            throw new GitDoesNotExistException("git does not exist, please perform \"init\" command\n");
         getIndexManager().updateIndex(files.stream().filter(Files::exists).collect(Collectors.toList()));
     }
 
@@ -262,7 +262,7 @@ public class MyGit {
             LogIOException, IndexIOException, ObjectStoreException, BranchIOException, MergeIOException, ObjectIOException {
         logger.trace("merge " + branch + " into " + getHeadManager().getCurrentBranch() + "\n");
         if (Files.notExists(GIT_DIRECTORY)){
-            throw new GitDoesNotExistException("git does not exist\n");
+            throw new GitDoesNotExistException("git does not exist, please perform \"init\" command\n");
         }
         try {
             String currentBranch = getHeadManager().getCurrentBranch();
@@ -298,7 +298,7 @@ public class MyGit {
     public byte[] log() throws GitDoesNotExistException, HeadIOException, LogIOException {
         logger.trace("log " + getHeadManager().getCurrentBranch() + "\n");
         if (Files.notExists(GIT_DIRECTORY))
-            throw new GitDoesNotExistException("git does not exist\n");
+            throw new GitDoesNotExistException("git does not exist, please perform \"init\"\n");
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
             outputStream.write(getHeadManager().getCurrentBranch().getBytes());

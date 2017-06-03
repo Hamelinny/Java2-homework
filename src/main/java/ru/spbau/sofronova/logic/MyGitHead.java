@@ -62,7 +62,7 @@ public class MyGitHead {
      */
     public String getCurrentCommit() throws GitDoesNotExistException, HeadIOException, BranchIOException {
         if (Files.notExists(repository.GIT_DIRECTORY))
-            throw new GitDoesNotExistException("git does not exist\n");
+            throw new GitDoesNotExistException("git does not exist, please perform \"init\"\n");
 
         Path branchLocation = buildPath(repository.REFS_DIRECTORY, getCurrentBranch());
         try {
