@@ -97,16 +97,29 @@ public class ClientScene {
                 return;
             }
             if (event.getClickCount() == 2) {
-                executeList(pathTextField.getText(), lastDir, fileList);
+                if (!executeList(pathTextField.getText(), lastDir, fileList)) {
+                    if (!pathToSave.getText().equals("")) {
+                        if (Files.notExists(Paths.get(pathToSave.getText())))
+                            executeGet(pathTextField.getText(), pathToSave.getText());
+                        else
+                            showMessage(ERROR, "Fail: ", "file already exists (or it's directory)");
+                    }
+                    else {
+                        chooseFolder(pathToSave, stage);
+                    }
+                }
             }
         });
 
         getButton.setOnAction(event -> {
             if (!pathToSave.getText().equals("")) {
-                if (Files.notExists(Paths.get(pathToSave.getText())))
+                if (Files.notExists(Paths.get(pathToSave.getText()))) {
                     executeGet(pathTextField.getText(), pathToSave.getText());
-                else
-                    showMessage(ERROR, "Fail: ", "file already exists (or it's directory)");
+                }
+                else if (Files.isDirectory(Paths.get(pathToSave.getText()))) {
+                    showMessage(ERROR, "Fail: ", "cannot save here, it's a directory");
+                } else
+                    showMessage(ERROR, "Fail: ", "file already exists");
             }
             else {
                 chooseFolder(pathToSave, stage);
@@ -165,14 +178,13 @@ public class ClientScene {
         }
     }
 
-    private void executeList(@NotNull String pathFrom, @NotNull Label lastDir,
+    private boolean executeList(@NotNull String pathFrom, @NotNull Label lastDir,
                                         @NotNull ListView<String> fileList) {
         Client client = new Client(Server.SERVER_PORT);
         try {
             List<String> paths = client.executeList(pathFrom);
             if (paths == null || paths.equals(new ArrayList<>())) {
-                showMessage(ERROR, "Fail: ", "Not a directory");
-                return;
+                return false;
             }
             lastDir.setText(pathFrom);
             fileList.getItems().clear();
@@ -183,6 +195,7 @@ public class ClientScene {
         } catch (Exception e) {
             showMessage(ERROR, "Fail: ", e.getMessage());
         }
+        return true;
     }
 
     private static void showMessage(@NotNull Alert.AlertType type, @NotNull String header, @NotNull String message) {

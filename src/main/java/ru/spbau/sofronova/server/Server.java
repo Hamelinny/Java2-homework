@@ -58,6 +58,7 @@ public class Server {
 
     /** Method to run server and to start processing connections.*/
     public void start() {
+        isStopped = false;
         new Thread(() -> {
             try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
                  Selector s = Selector.open()) {
